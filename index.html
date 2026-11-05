@@ -94,6 +94,9 @@ button{cursor:pointer}
 .u.note{font-size:.4em;font-weight:400;font-style:italic;color:var(--read);margin:.4em 0 .9em}
 .u.end{font-size:.4em;font-weight:400;color:var(--read);margin:.6em 0 1em;text-align:right}
 body.no-notes .u.note{display:none}
+.u .wt{display:none}
+.u.sothead.wait{display:flex!important;margin:.6em 0 .6em}
+.u.sothead.wait .wt{display:block;flex-basis:100%;font-size:1.25em;font-weight:700;color:var(--sot);border:2px dashed rgba(243,185,78,.6);border-radius:.3em;padding:.35em .6em;background:rgba(243,185,78,.08)}
 body:not(.show-sothead) .u.sotlabel{display:none}
 body:not(.show-sothead) .u.sothead:not(.brk){margin:.5em 0 .3em}
 body:not(.show-sothead) .u.sothead:not(.brk) .tag,body:not(.show-sothead) .u.sothead:not(.brk) .who,body:not(.show-sothead) .u.sothead:not(.brk) .dur{display:none}
@@ -748,9 +751,18 @@ class Engine{
     for(const h of this.heads){
       if(h.state!=='idle') continue;
       if(this.pos>h.sp+3){ h.state='skipped'; continue; }
-      if(this.pos>=h.armAt) this.sot={head:h,state:'armed',armedAt:now,line:0,base:0,mark:now};
+      if(this.pos>=h.armAt) this.sot={head:h,state:'armed',armedAt:now,line:0,base:0,mark:now,needQuiet:!!this._armQuiet};
       return;
     }
+  }
+  waitInfo(now){
+    const s=this.sot; if(!s||s.state!=='armed'||s.head.brk) return null;
+    const g=this.opt.grace*1000;
+    if(!this.opt.autoSot) return {phase:'manual'};
+    if(!this.opt.soundGate) return s.needQuiet?{phase:'manual'}:{phase:'sound',remain:Math.max(0,(s.armedAt+g-now)/1000)};
+    if(s.needQuiet&&!s.quietT) return {phase:'speech'};
+    const base=s.needQuiet?s.quietT:s.armedAt+g;
+    return {phase:'sound',remain:Math.max(0,(base+this.opt.maxWait*1000-now)/1000)};
   }
   sotElapsed(now){
     const s=this.sot; if(!s||s.state==='armed') return 0;
@@ -780,11 +792,19 @@ class Engine{
     const s=this.sot; if(!s){ this.predictStep(now,dt); return; }
     if(s.state==='armed'){
       // 主播念完：先忽略 grace 秒（避開尾音），之後一有聲音就開始；一直沒聲音，最多再等 maxWait 秒
-      if(s.head.brk){ this.startSot(now,0); return; }
+      // 手動按 ↓ 或推估進入的待命：主播可能還在說，要先等到安靜一下，之後的聲音才算 SOT
+      if(s.head.brk){ this.startSot(now,0); return; }   // 廣告直接開始倒數
       if(!this.opt.autoSot) return;
       const since=now-s.armedAt, g=this.opt.grace*1000;
-      if(!this.opt.soundGate){ if(since>=g) this.startSot(now,0); return; }
-      if(since>=g&&this.lastLoud>s.armedAt+g&&now-this.lastLoud<200){ this.startSot(now,0); return; }
+      if(!this.opt.soundGate){ if(!s.needQuiet&&since>=g) this.startSot(now,0); return; }
+      if(since<g) return;
+      if(s.needQuiet){
+        if(!s.quietT){ if(now-this.lastLoud>=300) s.quietT=now; return; }
+        if(this.lastLoud>s.quietT){ this.startSot(now,0); return; }
+        if(now-s.quietT>=this.opt.maxWait*1000) this.startSot(now,0);
+        return;
+      }
+      if(this.lastLoud>s.armedAt+g&&now-this.lastLoud<200){ this.startSot(now,0); return; }
       if(since>=g+this.opt.maxWait*1000) this.startSot(now,0);
       return;
     }
@@ -815,7 +835,7 @@ class Engine{
     }
     const cur=this.units[this.unitAtPos(this.pos)];
     let b=cur&&cur.s1!==undefined?cur.s1:this.N; if(b<=this.pos) b=this.pos+1;
-    this.setPos(b,now,true);
+    this._armQuiet=true; this.setPos(Math.min(b,this.N),now,true); this._armQuiet=false;
   }
   prev(now){
     if(this.sot){
@@ -845,7 +865,7 @@ class Engine{
       this.startSot(now,u.scr||0);
     } else if(u.type==='sothead'){
       this.sot=null; this.pos=Math.max(0,u.sp); u.state='idle';
-      this.sot={head:u,state:'armed',armedAt:now,line:0,base:0,mark:now};
+      this.sot={head:u,state:'armed',armedAt:now,line:0,base:0,mark:now,needQuiet:true};
     }
     this.pf=this.pos; this.cpos=this.pos;
   }
@@ -870,7 +890,7 @@ class Engine{
       if(!this.gateT) this.gateT=now;
       const pre=this.units[gate.pre];
       const half=!pre||pre.s1<=pre.s0||this.cpos>=pre.s0+(pre.s1-pre.s0)*0.5;
-      if(now-this.gateT>(half?1500:4000)){ this.gateT=0; this.cpos=gate.armAt; this.pos=gate.armAt; this.pf=gate.armAt; this.checkArm(now); return; }
+      if(now-this.gateT>(half?1500:4000)){ this.gateT=0; this.cpos=gate.armAt; this.pos=gate.armAt; this.pf=gate.armAt; this._armQuiet=true; this.checkArm(now); this._armQuiet=false; return; }
     } else this.gateT=0;
     np=Math.min(np,this.N);
     if(np>this.pf) this.pf=np;
@@ -1228,8 +1248,8 @@ function renderDoc(){
     if(u.type==='title') d.innerHTML='<span class="no">'+u.idx+'</span><span>'+esc(u.text)+'</span>';
     else if(u.type==='sothead'&&u.brk) d.innerHTML='<span class="tag">廣告</span><span class="dur">'+u.sec+' 秒</span><span class="cd"></span><div class="bar"><i></i></div>';
     else if(u.type==='pkgmark') d.innerHTML='';
-    else if(u.type==='sothead'&&u.fromPkg) d.innerHTML='<span class="tag">SOT</span><span class="who">已學習</span><span class="dur">'+u.sec.toFixed(1)+' 秒，'+u.screens.length+' 句</span><span class="cd"></span><div class="bar"><i></i></div>';
-    else if(u.type==='sothead') d.innerHTML='<span class="tag">原音</span><span class="who">'+esc(u.name||'')+'</span><span class="dur">'+(u.learned?'已學習 '+u.sec.toFixed(1)+' 秒，':u.sec+' 秒，')+u.screens.length+' 句</span><span class="cd"></span><div class="bar"><i></i></div>';
+    else if(u.type==='sothead'&&u.fromPkg) d.innerHTML='<div class="wt"></div><span class="tag">SOT</span><span class="who">已學習</span><span class="dur">'+u.sec.toFixed(1)+' 秒，'+u.screens.length+' 句</span><span class="cd"></span><div class="bar"><i></i></div>';
+    else if(u.type==='sothead') d.innerHTML='<div class="wt"></div><span class="tag">原音</span><span class="who">'+esc(u.name||'')+'</span><span class="dur">'+(u.learned?'已學習 '+u.sec.toFixed(1)+' 秒，':u.sec+' 秒，')+u.screens.length+' 句</span><span class="cd"></span><div class="bar"><i></i></div>';
     else if(u.type==='sotlabel') d.innerHTML='<span class="tag">原音</span><span class="who">'+esc(u.name||'')+'</span><span class="dur">國語，用語音追蹤</span>';
     else if(u.type==='end') d.textContent=u.text;
     else{ d.textContent=u.text; if(u.sc) d.classList.add('sc'); if(u.sot) d.classList.add('sotv'); if(u.look==='vo') d.classList.add('vo-look'); }
@@ -1293,6 +1313,9 @@ function frame(now){
   const s=eng.sot;
   for(const h of eng.heads){
     const el=els[h.ui]; const cd=el.querySelector('.cd'), bar=el.querySelector('.bar i');
+    const wi=s&&s.head===h?eng.waitInfo(now):null;
+    el.classList.toggle('wait',!!wi);
+    if(wi){ const wt=el.querySelector('.wt'); if(wt){ const nm=h.fromPkg?'SOT':'受訪原音'; const tx=wi.phase==='speech'?'等前一段說完…　按 ↓ 立即開始'+nm:wi.phase==='manual'?nm+' 待命中　按 ↓ 或空白鍵開始':'等待'+nm+'聲音，最多再 '+wi.remain.toFixed(1)+' 秒　按 ↓ 立即開始'; if(wt.textContent!==tx) wt.textContent=tx; } }
     if(s&&s.head===h){
       const e=eng.sotElapsed(now);
       cd.textContent=(h.brk?'剩 ':settings.showSotHead?'':(h.fromPkg?'SOT ':'原音 '))+(s.state==='armed'?'待命':(s.state==='paused'?'暫停 ':'')+Math.max(0,Math.ceil(h.sec-e))+' 秒');
@@ -1324,7 +1347,7 @@ function updateHud(now){
   else if(recErr){ t=recErr; cls+=' lost'; }
   else if(s){
     cls+=' sot';
-    if(s.state==='armed') t=s.head.brk?'廣告':eng.opt.soundGate?'主播念完，等待 SOT 聲音（最多 '+(eng.opt.grace+eng.opt.maxWait).toFixed(1)+' 秒）':'主播念完，即將開始';
+    if(s.state==='armed'){ const wi=eng.waitInfo(now); const nm=s.head.fromPkg?'SOT':'受訪原音'; t=s.head.brk?'廣告':!wi?'待命':wi.phase==='speech'?'等前一段說完，再等'+nm+'聲音':wi.phase==='manual'?nm+'待命，按 ↓ 開始':'等待'+nm+'聲音（最多 '+wi.remain.toFixed(1)+' 秒）'; }
     else if(s.state==='paused') t='時間軸暫停';
     else t=(s.head.brk?'廣告　剩 '+Math.max(0,Math.ceil(s.head.sec-eng.sotElapsed(now)))+' 秒':s.head.fromPkg?'SOT 時間軸（記憶）':'原音時間軸　'+(s.head.name||''))+(eng.speed!==1?'　速度 '+eng.speed.toFixed(2)+'×':'');
   }
