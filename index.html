@@ -466,6 +466,20 @@ function splitSentences(t,max){
   return out;
 }
 
+function proseLines(t){
+  // 先依句號、問號分句（不跨句合併），句內再依逗號切段，短的合併成約 16 字一行，逗號改為空格
+  const out=[];
+  for(const sen of t.trim().split(/[。？！?!；;]+/)){
+    const parts=sen.split(/[，、,]+/).map(x=>x.trim()).filter(Boolean);
+    let cur='';
+    for(const p of parts){
+      if(cur&&(cur+' '+p).length<=16) cur+=' '+p;
+      else { if(cur) out.push(cur); cur=p; }
+    }
+    if(cur) out.push(cur);
+  }
+  return out;
+}
 function parseStory(lines,name){
   const hasColor=lines.some(l=>l.red);
   lines=lines.map(l=>({text:(l.text||'').replace(/\s+$/,''),red:!!l.red,nonRed:!!l.nonRed}));
@@ -474,10 +488,18 @@ function parseStory(lines,name){
   // 以純等號行分段：最後一段＝VO+SOT，倒數第二段＝主播稿，更前面＝備註
   const segs=[[]];
   for(const l of lines){
-    if(/^={3,}\s*$/.test(l.text.trim())) segs.push([]); else segs[segs.length-1].push(l);
+    if(/^[=＝]{3,}$/.test(l.text.replace(/[\s\u3000\u200b\ufeff]/g,''))) segs.push([]); else segs[segs.length-1].push(l);
   }
   let anchorSeg=[], pkgSeg=[];
-  if(segs.length===1) anchorSeg=segs[0];
+  const isHash=l=>/^[#＃]{2,}$/.test(l.text.replace(/[\s\u3000\u200b\ufeff]/g,''));
+  if(segs.length===1){
+    // 沒有 =======：## 之前是主播稿，之後是 SOT（除非 ## 之後只有主播稿的 -1 字幕行）
+    const h0=segs[0].findIndex(isHash);
+    const after=h0>=0?segs[0].slice(h0+1).filter(l=>l.text.trim()):[];
+    const onlyAnchorSubs=after.every(l=>/^\s*-1/.test(l.text.trim()));
+    if(h0>=0&&after.length&&!onlyAnchorSubs){ anchorSeg=segs[0].slice(0,h0); pkgSeg=segs[0].slice(h0+1); }
+    else anchorSeg=segs[0];
+  }
   else if(segs.length===2){
     const first=(segs[0].find(l=>l.text.trim())||{text:''}).text.trim();
     if(/^[(（]/.test(first)) anchorSeg=segs[1]; else { anchorSeg=segs[0]; pkgSeg=segs[1]; }
@@ -485,7 +507,7 @@ function parseStory(lines,name){
 
   const units=[];
   // 主播稿：## 之後是切好的字幕行；沒有就自己斷句
-  const hi=anchorSeg.findIndex(l=>/^#{2,}\s*$/.test(l.text.trim()));
+  const hi=anchorSeg.findIndex(l=>/^[#＃]{2,}$/.test(l.text.replace(/[\s\u3000\u200b\ufeff]/g,'')));
   const para=hi>=0?anchorSeg.slice(0,hi):anchorSeg;
   const subs=hi>=0?anchorSeg.slice(hi+1):[];
   let subLines=subs.map(l=>stripTag(l.text)).filter(Boolean);
@@ -504,7 +526,7 @@ function parseStory(lines,name){
     const hm=/^=+\s*(?:\[\[\s*(\d+)\s*(?:秒|s|sec)?\s*\/\s*(\d+)\s*句?\s*\]\])?\s*(.*?)\s*=+\s*$/i.exec(raw);
     if(hm&&(hm[1]||hm[3])){
       const sec=hm[1]?+hm[1]:0;
-      sot={sec,n:hm[2]?+hm[2]:0,name:hm[3].trim(),tags:0}; pendingSc=false;
+      sot={sec,n:hm[2]?+hm[2]:0,name:hm[3].trim().replace(/^\[CG\]\s*/i,''),tags:0}; pendingSc=false;
       units.push(sec>0?{type:'sothead',sec,n:sot.n,name:sot.name}:{type:'sotlabel',name:sot.name});
       continue;
     }
@@ -513,6 +535,13 @@ function parseStory(lines,name){
     }
     const tagged=/^\s*-\d/.test(raw);
     const text=stripTag(raw);
+    if(/^\s*-1\s*$/.test(raw)){ closeSot(); continue; }          // 單獨的 -1：受訪原音（或整段）結束
+    const prose=!tagged&&text.length>24&&/[，。？！；、]/.test(text);
+    if(prose){                                                  // 「原始」格式的記者旁白段落
+      closeSot();
+      proseLines(text).forEach((x,i)=>units.push({type:'vo',text:x,sc:i%2===0}));
+      continue;
+    }
     if(tagged&&sot){
       if(sot.n&&sot.tags>=sot.n) closeSot();   // 已達標頭宣告的句數，這行屬於 SOT 之後
       else { sot.tags++; if(!text) pendingSc=true; }
@@ -1176,7 +1205,7 @@ function renderList(){
     } else {
       no++;
       const s=statsOf(st);
-      const warn=(!s.anchor?'<span class="warn">沒有找到主播稿</span>':'')+s.warns.map(w=>'<span class="warn">'+esc(w)+'</span>').join('');
+      const warn=(!s.anchor?'<span class="warn">沒有找到主播稿</span>':'')+(!st.units.some(u=>u.type==='pkg')?'<span class="warn">沒有找到 SOT（=======之後的內容）</span>':'')+s.warns.map(w=>'<span class="warn">'+esc(w)+'</span>').join('');
       li.innerHTML='<div class="no"><span class="grip">⠿</span>'+no+'</div><div><div class="nm">'+esc(st.name)+'</div><div class="st"><span>主播 '+s.anchor+' 行</span><span>VO '+s.vo+' 行</span><span>受訪原音 '+s.sot+' 段'+(s.sec?'，標示共 '+s.sec+' 秒':'')+'</span>'+(s.learnedN?'<span style="color:var(--ok)">SOT 時間已學習</span>':'<span>SOT 時間未學習</span>')+warn+'</div></div>'+ctl;
     }
     li.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{
@@ -1213,10 +1242,12 @@ function renderList(){
   }
   $('#goHint').textContent=stories.length?'':'先載入至少一則稿件。';
   $('#openLearn').disabled=!stories.some(st=>st.units.some(u=>u.type==='pkg'));
+  $('#openLearn').title=$('#openLearn').disabled?'目前載入的稿件都沒有找到 SOT 段落（=======之後的內容）':'';
 }
 $('#addBreak').addEventListener('click',()=>{ stories.push({type:'break',name:'廣告',sec:60,units:[]}); renderList(); toast('已加入廣告時段，可以拖曳到想要的位置'); });
 async function addFiles(files){
   for(const f of files){
+    if(/\.docx?$/i.test(f.name)){ toast('「'+f.name+'」是 Word 檔，請在 Word 另存成 RTF 或純文字（TXT）再載入',5000); continue; }
     try{
       const buf=new Uint8Array(await f.arrayBuffer());
       const {lines}=parseTextBuf(buf);
