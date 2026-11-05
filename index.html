@@ -71,12 +71,12 @@ button{cursor:pointer}
 #pane.m-v{transform:scaleY(-1)}
 #pane.m-hv{transform:scale(-1,-1)}
 #reader{position:absolute;inset:0;overflow:hidden}
-#doc{padding:var(--cy) 7vw 70vh 9vw;font-size:var(--fs);line-height:1.5;font-weight:600}
+#doc{padding:var(--cy) 7vw 70vh 9vw;font-size:var(--fs);line-height:var(--lh,1.5);font-weight:600}
 #cursor{position:absolute;left:0;top:var(--cy);width:100%;height:0;pointer-events:none;z-index:3}
 #cursor::before{content:"";position:absolute;left:0;top:-14px;border-left:22px solid var(--tally);border-top:14px solid transparent;border-bottom:14px solid transparent}
 #cursor::after{content:"";position:absolute;left:22px;right:0;top:-1px;height:2px;background:linear-gradient(90deg,rgba(229,72,63,.55),rgba(229,72,63,0) 40%)}
 
-.u{margin:0 0 .45em;transition:opacity .25s,color .25s;overflow-wrap:anywhere}
+.u{margin:0 0 var(--gap,.45em);transition:opacity .25s,color .25s;overflow-wrap:anywhere}
 .u.past{opacity:.28}
 .u.anchor{color:var(--anchor)}
 .u.vo{color:var(--vo)}
@@ -90,12 +90,14 @@ button{cursor:pointer}
 .u.sothead .bar{flex-basis:100%;height:5px;border-radius:3px;background:var(--panel2);overflow:hidden}
 .u.sothead .bar i{display:block;height:100%;width:0;background:var(--sot)}
 .u.sot{color:var(--sot);border-left:.14em solid rgba(243,185,78,.55);padding-left:.5em;margin-left:.1em}
-.u.sot.sc,.u.sotv.sc{margin-top:.85em}
+.u.sot.sc,.u.sotv.sc{margin-top:calc(var(--gap,.45em) * 1.9)}
 .u.vo.sotv{color:var(--sot);border-left:.14em solid rgba(243,185,78,.55);padding-left:.5em;margin-left:.1em}
 .u.note{font-size:.4em;font-weight:400;font-style:italic;color:var(--read);margin:.4em 0 .9em}
 .u.end{font-size:.4em;font-weight:400;color:var(--read);margin:.6em 0 1em;text-align:right}
 body.no-notes .u.note{display:none}
 .u .wt{display:none}
+.u .memo{font-size:.42em;font-weight:500;line-height:1.45;color:#8fe0cf;border-left:.3em solid rgba(143,224,207,.55);padding:.15em .6em;margin:.35em 0 .1em;white-space:pre-wrap;background:rgba(143,224,207,.07);border-radius:0 .3em .3em 0}
+body.no-memo .u .memo{display:none}
 .u.sothead.wait{display:flex!important;margin:.6em 0 .6em}
 .u.sothead.wait .wt{display:block;flex-basis:100%;font-size:1.25em;font-weight:700;color:var(--sot);border:2px dashed rgba(243,185,78,.6);border-radius:.3em;padding:.35em .6em;background:rgba(243,185,78,.08)}
 body:not(.show-sothead) .u.sotlabel{display:none}
@@ -165,6 +167,10 @@ body:not(.show-sothead) .u.sothead:not(.brk) .cd{margin-left:0;flex:1;text-align
 .ltable tr.on{background:rgba(243,185,78,.14)}
 .ltable tr[data-i]{cursor:pointer}
 .ltable .nb{padding:1px 7px;margin-left:2px}
+.ltable td.mc{min-width:220px}
+.ltable textarea.memoIn{width:100%;min-height:2.1em;resize:vertical;background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:5px 8px;color:#8fe0cf;font:inherit;line-height:1.4;overflow:hidden}
+.ltable textarea.memoIn:focus{outline:2px solid #8fe0cf;outline-offset:0}
+.lstage .memo{font-size:16px;color:#8fe0cf;margin-top:10px;white-space:pre-wrap;border-left:3px solid rgba(143,224,207,.55);padding-left:10px}
 #sotList .st{font-size:13px;margin-top:2px;color:var(--ink2)}
 #sotList{list-style:none;margin:0 0 12px;padding:0;display:flex;flex-direction:column;gap:6px}
 #sotList li{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:9px 11px;cursor:pointer}
@@ -200,7 +206,7 @@ body:not(.show-sothead) .u.sothead:not(.brk) .cd{margin-left:0;flex:1;text-align
 <main id="setup">
   <header>
     <h1>新聞提詞機</h1>
-    <p class="ver">版本 2026-11-05b（支援 MXF）</p>
+    <p class="ver">版本 2026-11-05c（對齊確認、行距、備註）</p>
     <p>載入主播稿與 SOT 字幕，依節目聲音讓字幕自動滑動。主播稿靠語音對位；SOT（主播念完後播出的整段影片）學過時間後依記憶推進。</p>
   </header>
 
@@ -223,6 +229,12 @@ body:not(.show-sothead) .u.sothead:not(.brk) .cd{margin-left:0;flex:1;text-align
     <div class="opts">
       <label>字級 <span class="val" id="fsVal"></span>
         <input type="range" id="fs" min="28" max="120" step="2">
+      </label>
+      <label>行距 <span class="val" id="lhVal"></span>
+        <input type="range" id="lh" min="1" max="2" step="0.05">
+      </label>
+      <label>句與句之間的間距 <span class="val" id="gapVal"></span>
+        <input type="range" id="gap" min="0" max="1" step="0.05">
       </label>
       <label>鏡像
         <select id="mirror">
@@ -247,6 +259,9 @@ body:not(.show-sothead) .u.sothead:not(.brk) .cd{margin-left:0;flex:1;text-align
       <label>之後一有聲音就開始；一直沒聲音時，最多再等幾秒就開始
         <input type="number" id="maxWait" min="0" max="15" step="0.5">
       </label>
+      <label>SOT 開始後幾秒內，用國語辨識確認一次對齊（0 為不確認）
+        <input type="number" id="verifyWin" min="0" max="120" step="5">
+      </label>
       <label class="inline"><input type="checkbox" id="predict"> 辨識沒跟上時，依語速推估繼續滑動</label>
       <label>推估最多領先辨識位置幾個字
         <input type="number" id="lead" min="6" max="80" step="2">
@@ -255,6 +270,7 @@ body:not(.show-sothead) .u.sothead:not(.brk) .cd{margin-left:0;flex:1;text-align
         <input type="number" id="stall" min="3" max="30" step="1">
       </label>
       <label class="inline"><input type="checkbox" id="meterOn"> 顯示麥克風音量條（辨識異常時可取消勾選試試）</label>
+      <label class="inline"><input type="checkbox" id="showMemo"> 顯示我加的備註（SOT 字幕時間裡填寫）</label>
       <label class="inline"><input type="checkbox" id="showNotes"> 顯示稿上的備註與畫面提示</label>
       <label class="inline"><input type="checkbox" id="showSotHead"> 顯示受訪原音標頭（姓名、秒數、句數）</label>
       <button class="btn primary" id="goResume" type="button" hidden>從中斷處繼續</button>
@@ -672,7 +688,7 @@ function buildDoc(stories,learned){
         else u.type='pkgmark';
       } else if(pkgMode){
         if(u.type==='sothead'||u.type==='sotlabel'){ u.type='sotlabel'; u.inPkg=true; }
-        else if(u.type==='vo'||u.type==='sot'){ u.look=(u.type==='vo'&&!u.sot)?'vo':'sot'; u.type='sot'; u.sot=false; }
+        else if(u.type==='vo'||u.type==='sot'){ u.look=(u.type==='vo'&&!u.sot)?'vo':'sot'; u.lang=u.type==='vo'?'zh':'fx'; u.type='sot'; u.sot=false; }
         else if(u.type==='end') pkgMode=false;
       }
       if(u.type==='sothead'){ head=u; u.lines=[]; u.state='idle'; u.sp=stream.length; }
@@ -698,6 +714,7 @@ function buildDoc(stories,learned){
       groups.forEach((g,si)=>{
         const t0=lr.starts[si], t1=si+1<groups.length?lr.starts[si+1]:lr.total;
         g.forEach(x=>{ x.t0=t0; x.t1=t1; x.scr=si; });
+        if(Array.isArray(lr.notes)&&lr.notes[si]) g[g.length-1].memo=lr.notes[si];
         u.screens.push({lines:g.map(x=>x.ui),t0,t1});
       });
     } else {
@@ -712,7 +729,7 @@ function buildDoc(stories,learned){
     if(u.fromPkg){
       u.mini=[];
       u.screens.forEach((sc,si)=>{
-        const ks=[]; for(const ui of sc.lines) for(const e of normalize(units[ui].text)) ks.push(e.k);
+        const ks=[]; for(const ui of sc.lines){ if(units[ui].lang!=='zh') continue; for(const e of normalize(units[ui].text)) ks.push(e.k); }   // 外語受訪的中文翻譯聽不到，不拿來比對
         ks.forEach((k,i)=>u.mini.push({k,scr:si,frac:ks.length?i/ks.length:0}));
       });
     }
@@ -739,7 +756,7 @@ function lcs(H,S,s0,s1){
 
 /* ---------- 追蹤引擎（不碰畫面，方便測試） ---------- */
 class Engine{
-  constructor(opt){ this.opt=Object.assign({autoSot:true,sotDelay:0.6,grace:0.5,maxWait:3,soundGate:false,predict:true,lead:20,predictMs:8000,resync:true},opt||{}); this.setStories([]); }
+  constructor(opt){ this.opt=Object.assign({autoSot:true,sotDelay:0.6,grace:0.5,maxWait:3,soundGate:false,predict:true,lead:20,predictMs:8000,resync:true,verifyWin:20},opt||{}); this.setStories([]); }
   setStories(stories,learned){
     const d=buildDoc(stories,learned);
     this.units=d.units; this.stream=d.stream; this.tracked=d.tracked; this.N=d.stream.length;
@@ -953,7 +970,8 @@ class Engine{
       }
       if(best&&best.m>=6&&best.score>=0.7){ this.finishSot(now); this.setPos(best.p,now); return best; }
       const s=this.sot;
-      if(this.opt.resync&&h.fromPkg&&s.state==='running'&&h.mini&&h.mini.length){
+      // SOT 開始後的前 verifyWin 秒：用辨識到的國語確認一次對齊，確認後這段 SOT 就不再檢查
+      if(this.opt.resync&&h.fromPkg&&s.state==='running'&&!s.verified&&h.mini&&h.mini.length&&this.sotElapsed(now)<=this.opt.verifyWin){
         let rb=null;
         for(const H of Hs){
           if(H.length<6) continue;
@@ -962,10 +980,12 @@ class Engine{
             if(!rb||sc>rb.score) rb={p,score:sc};
           }
         }
-        if(rb&&rb.score>=0.75){
-          const e=h.mini[rb.p-1], scr=h.screens[e.scr];
-          const target=scr.t0+e.frac*(scr.t1-scr.t0), cur=this.sotElapsed(now);
-          if(Math.abs(target-cur)>1.2){ s.base=target; s.mark=now; s.line=e.scr; this.lastMatch=now; return rb; }
+        if(rb&&rb.score>=0.7){
+          const en=h.mini[rb.p-1], scr=h.screens[en.scr];
+          const target=scr.t0+en.frac*(scr.t1-scr.t0), cur=this.sotElapsed(now);
+          s.verified=true; s.shift=+(target-cur).toFixed(1); this.lastMatch=now;
+          if(Math.abs(target-cur)>1.2){ s.base=target; s.mark=now; s.line=en.scr; }
+          return rb;
         }
       }
       return null;
@@ -1176,7 +1196,7 @@ if(typeof document!=='undefined'){
 (function(){
 const $=s=>document.querySelector(s);
 const esc=s=>s.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
-const DEFAULTS={mic:'',font:56,mirror:'none',cursor:33,autoSot:true,sotDelay:0.6,grace:0.5,maxWait:3,showNotes:true,showSotHead:false,stall:5,meter:true,predict:true,lead:20,micTrack:false};
+const DEFAULTS={mic:'',font:56,mirror:'none',cursor:33,autoSot:true,sotDelay:0.6,grace:0.5,maxWait:3,showNotes:true,showMemo:true,showSotHead:false,lh:1.5,gap:0.45,verifyWin:20,stall:5,meter:true,predict:true,lead:20,micTrack:false};
 let settings=Object.assign({},DEFAULTS);
 try{ Object.assign(settings,JSON.parse(localStorage.getItem('newsprompter.settings')||'{}')); }catch(e){}
 const saveSettings=()=>{ try{ localStorage.setItem('newsprompter.settings',JSON.stringify(settings)); }catch(e){} };
@@ -1243,6 +1263,8 @@ function toast(msg,ms){
 }
 function applySettingsToUi(){
   $('#fs').value=settings.font; $('#fsVal').textContent=settings.font+' px';
+  $('#lh').value=settings.lh; $('#lhVal').textContent=(+settings.lh).toFixed(2); $('#gap').value=settings.gap; $('#gapVal').textContent=(+settings.gap).toFixed(2)+' 字高';
+  $('#verifyWin').value=settings.verifyWin; $('#showMemo').checked=settings.showMemo!==false;
   $('#cy').value=settings.cursor; $('#cyVal').textContent=settings.cursor+'%';
   $('#mirror').value=settings.mirror; $('#autoSot').checked=settings.autoSot;
   $('#grace').value=settings.grace; $('#maxWait').value=settings.maxWait; $('#showNotes').checked=settings.showNotes; $('#stall').value=settings.stall; $('#micTrack').checked=!!settings.micTrack; $('#predict').checked=settings.predict; $('#lead').value=settings.lead; $('#meterOn').checked=settings.meter; $('#showSotHead').checked=settings.showSotHead;
@@ -1250,20 +1272,27 @@ function applySettingsToUi(){
 function applyStageStyle(){
   const r=document.documentElement.style;
   r.setProperty('--fs',settings.font+'px'); r.setProperty('--cy',settings.cursor+'%');
+  r.setProperty('--lh',settings.lh); r.setProperty('--gap',settings.gap+'em');
   const p=$('#pane'); p.className=settings.mirror==='none'?'':'m-'+settings.mirror;
   const fh=$('#btnFlipH'), fv=$('#btnFlipV');
   if(fh){ fh.classList.toggle('on',settings.mirror.includes('h')); fv.classList.toggle('on',settings.mirror.includes('v')); }
   document.body.classList.toggle('no-notes',!settings.showNotes);
+  document.body.classList.toggle('no-memo',settings.showMemo===false);
   document.body.classList.toggle('show-sothead',!!settings.showSotHead);
 }
 function bindSetting(id,key,conv){
   $('#'+id).addEventListener('input',e=>{
     const el=e.target; settings[key]=conv?conv(el):el.value; saveSettings();
     $('#fsVal').textContent=settings.font+' px'; $('#cyVal').textContent=settings.cursor+'%';
+    $('#lhVal').textContent=(+settings.lh).toFixed(2); $('#gapVal').textContent=(+settings.gap).toFixed(2)+' 字高';
     applyStageStyle();
   });
 }
 bindSetting('fs','font',el=>+el.value);
+bindSetting('lh','lh',el=>+el.value);
+bindSetting('showMemo','showMemo',el=>el.checked);
+bindSetting('gap','gap',el=>+el.value);
+bindSetting('verifyWin','verifyWin',el=>Math.max(0,Math.min(120,+el.value||0)));
 bindSetting('cy','cursor',el=>+el.value);
 bindSetting('mirror','mirror');
 bindSetting('autoSot','autoSot',el=>el.checked);
@@ -1387,7 +1416,7 @@ function renderDoc(){
     else if(u.type==='sothead') d.innerHTML='<div class="wt"></div><span class="tag">原音</span><span class="who">'+esc(u.name||'')+'</span><span class="dur">'+(u.learned?'已學習 '+u.sec.toFixed(1)+' 秒，':u.sec+' 秒，')+u.screens.length+' 句</span><span class="cd"></span><div class="bar"><i></i></div>';
     else if(u.type==='sotlabel') d.innerHTML='<span class="tag">原音</span><span class="who">'+esc(u.name||'')+'</span><span class="dur">國語，用語音追蹤</span>';
     else if(u.type==='end') d.textContent=u.text;
-    else{ d.textContent=u.text; if(u.sc) d.classList.add('sc'); if(u.sot) d.classList.add('sotv'); if(u.look==='vo') d.classList.add('vo-look'); }
+    else{ d.textContent=u.text; if(u.memo){ const m=document.createElement('div'); m.className='memo'; m.textContent=u.memo; d.appendChild(m); } if(u.sc) d.classList.add('sc'); if(u.sot) d.classList.add('sotv'); if(u.look==='vo') d.classList.add('vo-look'); }
     if(u.type==='anchor'||u.type==='vo'||u.type==='sot'||u.type==='sothead') d.classList.add('tap');
     if(u.brk) d.classList.add('brk');
     doc.appendChild(d); els.push(d);
@@ -1484,7 +1513,7 @@ function updateHud(now){
     cls+=' sot';
     if(s.state==='armed'){ const wi=eng.waitInfo(now); const nm=s.head.fromPkg?'SOT':'受訪原音'; t=s.head.brk?'廣告':!wi?'待命':wi.phase==='speech'?'等前一段說完，再等'+nm+'聲音':wi.phase==='manual'?nm+'待命，按 ↓ 開始':'等待'+nm+'聲音（最多 '+wi.remain.toFixed(1)+' 秒）'; }
     else if(s.state==='paused') t='時間軸暫停';
-    else t=(s.head.brk?'廣告　剩 '+Math.max(0,Math.ceil(s.head.sec-eng.sotElapsed(now)))+' 秒':s.head.fromPkg?'SOT 時間軸（記憶）':'原音時間軸　'+(s.head.name||''))+(eng.speed!==1?'　速度 '+eng.speed.toFixed(2)+'×':'');
+    else t=(s.head.brk?'廣告　剩 '+Math.max(0,Math.ceil(s.head.sec-eng.sotElapsed(now)))+' 秒':s.head.fromPkg?('SOT 時間軸（記憶）'+(s.verified?'　已對齊確認'+(Math.abs(s.shift||0)>1.2?'（校正 '+(s.shift>0?'+':'')+s.shift+' 秒）':''):eng.opt.verifyWin>0&&s.state==='running'?(eng.sotElapsed(now)<=eng.opt.verifyWin?'　對齊確認中 '+Math.ceil(eng.opt.verifyWin-eng.sotElapsed(now))+' 秒':'　未能確認對齊，照記憶播放'):'')):'原音時間軸　'+(s.head.name||''))+(eng.speed!==1?'　速度 '+eng.speed.toFixed(2)+'×':'');
   }
   else if(eng.paused) t='追蹤暫停';
   else if(eng.predicting){ cls+=' ok'; t='推估滑動中（辨識沒跟上）'; }
@@ -1753,7 +1782,8 @@ function applyAlign(k,b,chunks,span,ms){
   const starts=r.res.map(x=>Math.max(0,+(x.t-span.on).toFixed(2)));
   for(let i=1;i<starts.length;i++) if(starts[i]<starts[i-1]+0.2) starts[i]=+(starts[i-1]+0.2).toFixed(2);
   const total=Math.max(starts[starts.length-1]+1,+(span.off-span.on).toFixed(2));
-  learned[k]={story:b.story,total,starts,offset:+span.on.toFixed(2),saved:new Date().toISOString(),source:'auto',
+  const oldNotes=learned[k]&&learned[k].notes;
+  learned[k]={story:b.story,total,starts,offset:+span.on.toFixed(2),saved:new Date().toISOString(),source:'auto',notes:oldNotes&&oldNotes.length===b.groups.length?oldNotes:undefined,
     anchored:r.res.map(x=>x.anchored),seg:[r.matched,r.usable]};
   saveLearned();
   setStatus(k,{state:'done',ms});
@@ -1823,16 +1853,29 @@ function renderTable(){
   const b=curBlock(), k=curKey(), lr=k&&learned[k];
   $('#lpPv').hidden=!(lr&&LP.info[k]); $('#lpAdj').hidden=!lr; LP.lastI=-2;
   if(!b){ $('#lpTable').innerHTML=''; return; }
-  let rows='<tr><th>句</th><th>開始</th><th>依據</th><th>字幕</th></tr>';
+  let rows='<tr><th>句</th><th>開始</th><th>依據</th><th>字幕</th><th>備註（播出時顯示在字幕下方）</th></tr>';
   b.groups.forEach((g,i)=>{
     const t=lr&&lr.starts[i]!=null?lr.starts[i]:null;
+    const memo=lr&&Array.isArray(lr.notes)&&lr.notes[i]||'';
     const basis=!lr?'':lr.source==='manual'?'手動':(lr.anchored&&lr.anchored[i]?'<span class="ok">辨識對上</span>':'推估');
-    rows+='<tr data-i="'+i+'"><td class="n">'+(i+1)+((g[0].type==='sot'||g[0].sot)?' 原音':'')+'</td><td class="n">'+(t!=null?t.toFixed(1)+' 秒 <button class="btn small nb" data-n="-0.3" type="button">−</button><button class="btn small nb" data-n="0.3" type="button">＋</button>':'—')+'</td><td class="n">'+basis+'</td><td>'+g.map(x=>esc(x.text)).join('<br>')+'</td></tr>';
+    rows+='<tr data-i="'+i+'"><td class="n">'+(i+1)+((g[0].type==='sot'||g[0].sot)?' 原音':'')+'</td><td class="n">'+(t!=null?t.toFixed(1)+' 秒 <button class="btn small nb" data-n="-0.3" type="button">−</button><button class="btn small nb" data-n="0.3" type="button">＋</button>':'—')+'</td><td class="n">'+basis+'</td><td>'+g.map(x=>esc(x.text)).join('<br>')+'</td><td class="mc">'+(lr?'<textarea class="memoIn" rows="1" data-i="'+i+'" placeholder="點這裡輸入">'+esc(memo)+'</textarea>':'')+'</td></tr>';
   });
   $('#lpTable').innerHTML=rows;
+  document.querySelectorAll('#lpTable textarea.memoIn').forEach(t=>{ t.style.height='auto'; t.style.height=t.scrollHeight+'px'; });
 }
 // 單句微調、點選試播
+// 備註：直接在表格裡輸入，自動儲存
+let memoTimer=0;
+$('#lpTable').addEventListener('input',e=>{
+  const ta=e.target.closest('textarea.memoIn'); if(!ta) return;
+  ta.style.height='auto'; ta.style.height=ta.scrollHeight+'px';
+  const k=curKey(), lr=learned[k], b=curBlock(); if(!lr||!b) return;
+  if(!Array.isArray(lr.notes)||lr.notes.length!==b.groups.length) lr.notes=b.groups.map((_,i)=>(Array.isArray(lr.notes)&&lr.notes[i])||'');
+  lr.notes[+ta.dataset.i]=ta.value;
+  clearTimeout(memoTimer); memoTimer=setTimeout(()=>{ saveLearned(); LP.lastI=-2; },400);
+});
 $('#lpTable').addEventListener('click',e=>{
+  if(e.target.closest('textarea')) return;
   const tr=e.target.closest('tr[data-i]'); if(!tr) return; const i=+tr.dataset.i, k=curKey(), lr=learned[k]; if(!lr) return;
   const nb=e.target.closest('button[data-n]');
   if(nb){ setStart(i,lr.starts[i]+(+nb.dataset.n)); return; }
@@ -1863,7 +1906,8 @@ function pvLoop(){
     if(i!==LP.lastI){
       LP.lastI=i;
       $('#lpPvIdx').textContent=i>=0?('第 '+(i+1)+' / '+b.groups.length+' 句'):(i===-3?'SOT 已結束':'SOT 開始前');
-      $('#lpPvText').innerHTML=i>=0?b.groups[i].map(x=>esc(x.text)).join('<br>'):'';
+      const mm=i>=0&&Array.isArray(lr.notes)?lr.notes[i]:'';
+      $('#lpPvText').innerHTML=(i>=0?b.groups[i].map(x=>esc(x.text)).join('<br>'):'')+(mm?'<div class="memo">'+esc(mm)+'</div>':'');
       document.querySelectorAll('#lpTable tr[data-i]').forEach(tr=>tr.classList.toggle('on',+tr.dataset.i===i));
       const on=document.querySelector('#lpTable tr.on'); if(on&&!pl.paused) on.scrollIntoView({block:'nearest'});
     }
@@ -2010,7 +2054,7 @@ function learnBlocks(){
 /* ---------- 開始與結束 ---------- */
 async function start(resume){
   if(!stories.length) return;
-  eng=new Engine({resync:settings.resync!==false,autoSot:settings.autoSot,grace:settings.grace,maxWait:settings.maxWait,predict:settings.predict,lead:settings.lead});
+  eng=new Engine({verifyWin:settings.verifyWin,resync:settings.resync!==false,autoSot:settings.autoSot,grace:settings.grace,maxWait:settings.maxWait,predict:settings.predict,lead:settings.lead});
   eng.setStories(stories,learned);
   $('#setup').hidden=true; $('#stage').hidden=false;
   applyStageStyle(); renderDoc();
