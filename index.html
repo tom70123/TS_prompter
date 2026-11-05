@@ -34,6 +34,7 @@ button{cursor:pointer}
 #setup header{grid-column:1/-1}
 #setup h1{font-size:34px;font-weight:700;margin:0 0 6px;letter-spacing:.02em}
 #setup header p{margin:0;color:var(--ink2);font-size:16px}
+#setup header p.ver{font-size:12px;margin:0 0 6px;opacity:.7}
 #setup h2{font-size:17px;font-weight:700;margin:0 0 12px}
 .drop{border:2px dashed var(--line);border-radius:8px;padding:22px;text-align:center;color:var(--ink2);transition:border-color .15s,background .15s}
 .drop.over{border-color:var(--sot);background:rgba(243,185,78,.06)}
@@ -199,6 +200,7 @@ body:not(.show-sothead) .u.sothead:not(.brk) .cd{margin-left:0;flex:1;text-align
 <main id="setup">
   <header>
     <h1>新聞提詞機</h1>
+    <p class="ver">版本 2026-11-05b（支援 MXF）</p>
     <p>載入主播稿與 SOT 字幕，依節目聲音讓字幕自動滑動。主播稿靠語音對位；SOT（主播念完後播出的整段影片）學過時間後依記憶推進。</p>
   </header>
 
@@ -331,8 +333,8 @@ body:not(.show-sothead) .u.sothead:not(.brk) .cd{margin-left:0;flex:1;text-align
         <div class="lrow">
           <button class="btn primary" id="lpRecStart" type="button">開始錄音</button>
           <button class="btn" id="lpRecStop" type="button" disabled>停止錄音</button>
-          <label class="btn" for="lpImportA">改用音檔</label>
-          <input type="file" id="lpImportA" accept="audio/*,video/*" hidden>
+          <label class="btn" for="lpImportA">改用音檔或影片檔（含 MXF）</label>
+          <input type="file" id="lpImportA" accept="audio/*,video/*,.mxf,.MXF" hidden>
           <span id="lpRecTime" class="lrec"></span>
         </div>
         <div id="lpRecInfo" class="lrow note"></div>
@@ -1063,7 +1065,109 @@ function alignChunks(chunks,groups){
   return {res,matched:chain.length,usable,rate};
 }
 
-const CORE={alignChunks,pkgLines,sotBlocks,makeGroups,hashStr,parseRtf,parseText,parseTextBuf,parseStory,normalize,keysFromText,buildDoc,Engine,cardinal};
+
+/* ---------- MXF 聲音抽取（分段讀檔，不必整個檔案載入記憶體） ---------- */
+// readAt(位移, 長度) 回傳 Promise<Uint8Array>；輸出 16 kHz 單聲道 Float32Array
+async function mxfExtractAudio(readAt,size,onProgress){
+  const WIN=1<<20; let cS=0, cB=new Uint8Array(0);
+  async function get(off,len){
+    if(off>=cS&&off+len<=cS+cB.length) return cB.subarray(off-cS,off-cS+len);
+    if(len>WIN) return readAt(off,len);
+    cS=off; cB=await readAt(off,Math.min(Math.max(WIN,len),size-off));
+    return cB.subarray(0,Math.min(len,cB.length));
+  }
+  const u32=d=>((d[0]<<24)|(d[1]<<16)|(d[2]<<8)|d[3])>>>0;
+  // 找第一個 partition pack（前面可能有 run-in）
+  let off=-1;
+  { const h=await get(0,Math.min(65552,size)); const P=[0x06,0x0E,0x2B,0x34,0x02,0x05,0x01,0x01,0x0D,0x01,0x02,0x01,0x01];
+    for(let i=0;i+13<=h.length&&off<0;i++){ let ok=true; for(let j=0;j<13;j++) if(h[i+j]!==P[j]){ ok=false; break; } if(ok) off=i; } }
+  if(off<0) throw new Error('這不是 MXF 檔');
+  const fmt={rate:48000,bits:0,ch:0,align:0};
+  const tracks=new Map();
+  const OUT=16000;
+  function trk(id){ let t=tracks.get(id); if(!t){ t={buf:[],cur:new Float32Array(65536),n:0,acc:0,cnt:0,ph:0,carry:null,sq:0,total:0}; tracks.set(id,t); } return t; }
+  function push(t,x){ // 降頻到 16 kHz（區間平均）
+    const ratio=fmt.rate/OUT; t.acc+=x; t.cnt++; t.ph+=1;
+    if(t.ph>=ratio){ const y=t.acc/t.cnt; t.acc=0; t.cnt=0; t.ph-=ratio;
+      if(t.n===t.cur.length){ t.buf.push(t.cur); t.cur=new Float32Array(65536); t.n=0; }
+      t.cur[t.n++]=y; t.sq+=y*y; t.total++; }
+  }
+  function pcm(t,bytes){ // 交錯的 little-endian PCM（BWF／AES3 一般容器）
+    const bps=fmt.bits?Math.ceil(fmt.bits/8):(fmt.align&&fmt.ch?fmt.align/fmt.ch:3), ch=fmt.ch||1, fb=bps*ch;
+    let d=bytes;
+    if(t.carry&&t.carry.length){ const m=new Uint8Array(t.carry.length+bytes.length); m.set(t.carry); m.set(bytes,t.carry.length); d=m; }
+    const frames=Math.floor(d.length/fb);
+    for(let f=0;f<frames;f++){
+      let sum=0;
+      for(let c=0;c<ch;c++){
+        const o=f*fb+c*bps; let v;
+        if(bps===2){ v=(d[o]|(d[o+1]<<8)); if(v&0x8000) v-=0x10000; v/=32768; }
+        else if(bps===3){ v=(d[o]|(d[o+1]<<8)|(d[o+2]<<16)); if(v&0x800000) v-=0x1000000; v/=8388608; }
+        else if(bps===4){ v=(d[o]|(d[o+1]<<8)|(d[o+2]<<16)|(d[o+3]<<24)); v/=2147483648; }
+        else v=0;
+        sum+=v;
+      }
+      push(t,sum/ch);
+    }
+    t.carry=d.slice(frames*fb);
+  }
+  function d10(t,v){ // D-10（IMX）AES3：4 位元組標頭，之後每個取樣 8 聲道 × 4 位元組
+    if(v.length<4) return;
+    const valid=v[3]||0xFF, per=32, n=Math.floor((v.length-4)/per);
+    for(let i=0;i<n;i++){
+      let sum=0,c2=0;
+      for(let c=0;c<8;c++){ if(!(valid&(1<<c))) continue;
+        const o=4+i*per+c*4; const w=(v[o]|(v[o+1]<<8)|(v[o+2]<<16)|(v[o+3]<<24))>>>0;
+        let x=(w>>>4)&0xFFFFFF; if(x&0x800000) x-=0x1000000; sum+=x/8388608; c2++; }
+      push(t,c2?sum/c2:0);
+    }
+  }
+  let lastP=0;
+  while(off+17<=size){
+    const hd=await get(off,Math.min(25,size-off)); if(hd.length<17) break;
+    if(hd[0]!==0x06||hd[1]!==0x0E||hd[2]!==0x2B||hd[3]!==0x34) throw new Error('MXF 結構無法解析（位置 '+off+'）');
+    let l=hd[16], hl=17;
+    if(l&0x80){ const n=l&0x7F; if(n>8) throw new Error('MXF 長度欄位錯誤'); l=0; for(let i=0;i<n;i++) l=l*256+hd[17+i]; hl=17+n; }
+    const k=hd, vOff=off+hl;
+    if(k[4]===0x02&&k[5]===0x53&&k[8]===0x0D&&k[9]===0x01&&k[10]===0x01&&k[11]===0x01&&k[12]===0x01&&k[13]===0x01&&(k[14]===0x42||k[14]===0x47||k[14]===0x48)&&l<65536){
+      const v=await get(vOff,l); let p=0;   // 聲音描述子：取樣率、位元數、聲道數
+      while(p+4<=v.length){ const tag=(v[p]<<8)|v[p+1], len=(v[p+2]<<8)|v[p+3], d=v.subarray(p+4,p+4+len);
+        if(tag===0x3D03&&len>=8){ const a=u32(d), b=u32(d.subarray(4)); if(b) fmt.rate=Math.round(a/b); }
+        else if(tag===0x3D01&&len>=4) fmt.bits=u32(d);
+        else if(tag===0x3D07&&len>=4) fmt.ch=u32(d);
+        else if(tag===0x3D0A&&len>=2) fmt.align=(d[0]<<8)|d[1];
+        p+=4+len; }
+    } else if(k[4]===0x01&&k[5]===0x02&&k[8]===0x0D&&k[9]===0x01&&k[10]===0x03&&k[11]===0x01&&(k[12]===0x16||k[12]===0x06)){
+      const t=trk(k[12]+'-'+k[14]+'-'+k[15]);
+      if(k[12]===0x06&&k[14]===0x10){ d10(t,await get(vOff,l)); }
+      else for(let q=0;q<l;){ const n=Math.min(WIN,l-q); pcm(t,l<=WIN?await get(vOff,l):await readAt(vOff+q,n)); q+=n; }
+    }
+    off=vOff+l;
+    if(onProgress&&off-lastP>(8<<20)){ lastP=off; onProgress(Math.min(1,off/size)); await new Promise(r=>setTimeout(r,0)); }
+  }
+  if(!tracks.size) throw new Error('這個 MXF 裡沒有找到聲音軌');
+  // 合併有聲音的聲道（太小聲的視為空軌）
+  const list=[...tracks.values()].map(t=>{ const parts=t.buf.concat([t.cur.subarray(0,t.n)]); const a=new Float32Array(t.total); let o=0; for(const p of parts){ a.set(p,o); o+=p.length; } return {a,rms:Math.sqrt(t.sq/Math.max(1,t.total))}; });
+  const mx=Math.max(...list.map(x=>x.rms));
+  const use=list.filter(x=>x.rms>=mx*0.1&&x.rms>1e-5);
+  const len=Math.max(...list.map(x=>x.a.length));
+  const out=new Float32Array(len);
+  for(const x of (use.length?use:list)) for(let i=0;i<x.a.length;i++) out[i]+=x.a[i]/(use.length||list.length);
+  let pk=0; for(let i=0;i<len;i++){ const v=Math.abs(out[i]); if(v>pk) pk=v; }
+  if(pk>0&&pk<0.5){ const g=0.9/pk; for(let i=0;i<len;i++) out[i]*=g; }
+  if(onProgress) onProgress(1);
+  return {data:out,rate:OUT,duration:len/OUT,tracks:tracks.size,used:use.length,fmt};
+}
+function wavBlob(f32,sr){
+  const n=f32.length, buf=new ArrayBuffer(44+n*2), v=new DataView(buf);
+  const w=(o,t)=>{ for(let i=0;i<t.length;i++) v.setUint8(o+i,t.charCodeAt(i)); };
+  w(0,'RIFF'); v.setUint32(4,36+n*2,true); w(8,'WAVE'); w(12,'fmt '); v.setUint32(16,16,true); v.setUint16(20,1,true); v.setUint16(22,1,true);
+  v.setUint32(24,sr,true); v.setUint32(28,sr*2,true); v.setUint16(32,2,true); v.setUint16(34,16,true); w(36,'data'); v.setUint32(40,n*2,true);
+  for(let i=0,o=44;i<n;i++,o+=2){ const x=Math.max(-1,Math.min(1,f32[i])); v.setInt16(o,x<0?x*32768:x*32767,true); }
+  return typeof Blob!=='undefined'?new Blob([buf],{type:'audio/wav'}):buf;
+}
+
+const CORE={mxfExtractAudio,wavBlob,alignChunks,pkgLines,sotBlocks,makeGroups,hashStr,parseRtf,parseText,parseTextBuf,parseStory,normalize,keysFromText,buildDoc,Engine,cardinal};
 if(typeof module!=='undefined') module.exports=CORE;
 /*CORE-END*/
 
@@ -1664,6 +1768,7 @@ function curKey(){ const b=curBlock(); return b?b.head.key:null; }
 function statusText(k){
   const st=LP.status[k]||{}, lr=learned[k], inf=LP.info[k];
   if(LP.recKey===k) return '<span style="color:var(--tally)">錄音中</span>';
+  if(st.state==='extract') return '從 MXF 抽出聲音 '+Math.round((st.pct||0)*100)+'%';
   if(st.state==='queued') return '排隊等待辨識';
   if(st.state==='loading') return '載入辨識模型'+(st.pct?' '+Math.round(st.pct*100)+'%':'');
   if(st.state==='running') return '辨識中';
@@ -1684,7 +1789,8 @@ function renderSotList(){
 }
 function renderStatus(){
   const k=curKey(), st=LP.status[k]||{}; let h='';
-  if(st.state==='queued') h='排隊等待辨識（前面還有其他則）';
+  if(st.state==='extract') h='正在從 MXF 抽出聲音（大檔案需要一點時間）<div class="bar2"><i style="width:'+Math.round((st.pct||0)*100)+'%"></i></div>';
+  else if(st.state==='queued') h='排隊等待辨識（前面還有其他則）';
   else if(st.state==='loading') h='載入辨識模型'+(st.pct?'（第一次需下載）':'')+'<div class="bar2"><i style="width:'+Math.round((st.pct||0)*100)+'%"></i></div>';
   else if(st.state==='running') h='辨識中，約需 '+Math.ceil((st.dur||60)/4)+' 秒，可以先去錄下一則';
   else if(st.state==='error') h='<span class="warn">辨識失敗：'+esc(st.msg||'')+'</span>';
@@ -1837,7 +1943,33 @@ $('#lpSrc').addEventListener('click',chooseSource);
 $('#lpSrcStop').addEventListener('click',stopSource);
 $('#lpRecStart').addEventListener('click',e=>{ lpStartRec(); e.target.blur(); });
 $('#lpRecStop').addEventListener('click',e=>{ lpStopRec(); e.target.blur(); });
-$('#lpImportA').addEventListener('change',async e=>{ const f=e.target.files[0]; e.target.value=''; const b=curBlock(); if(f&&b) await saveRecording(b.head.key,b.story,f); });
+async function isMxfFile(f){
+  try{ const h=new Uint8Array(await f.slice(0,65552).arrayBuffer()); const P=[0x06,0x0E,0x2B,0x34,0x02,0x05,0x01,0x01,0x0D,0x01,0x02,0x01,0x01];
+    for(let i=0;i+13<=h.length;i++){ let ok=true; for(let j=0;j<13;j++) if(h[i+j]!==P[j]){ ok=false; break; } if(ok) return true; } }catch(e){}
+  return false;
+}
+$('#lpImportA').addEventListener('change',async e=>{
+  const f=e.target.files[0]; e.target.value=''; const b=curBlock();
+  if(!f) return;
+  if(!b){ toast('請先在左邊選一則新聞'); return; }
+  const k=b.head.key;
+  toast('已選擇「'+f.name+'」（'+(f.size/1048576).toFixed(0)+' MB），處理中…',3000);
+  if(/\.mxf$/i.test(f.name)||await isMxfFile(f)){
+    // MXF：瀏覽器無法直接解開，改由程式分段讀檔、抽出聲音軌
+    setStatus(k,{state:'extract',pct:0});
+    try{
+      const r=await mxfExtractAudio((o,l)=>f.slice(o,o+l).arrayBuffer().then(x=>new Uint8Array(x)),f.size,pct=>setStatus(k,{state:'extract',pct}));
+      toast('已從 MXF 抽出聲音：'+r.duration.toFixed(1)+' 秒（使用 '+r.used+' / '+r.tracks+' 個聲音軌）',3500);
+      setStatus(k,{state:'',pct:0});
+      await saveRecording(k,b.story,wavBlob(r.data,r.rate));
+    }catch(err){ setStatus(k,{state:'error',msg:'MXF：'+(err.message||err)}); }
+    return;
+  }
+  if(f.size>400*1048576) toast('檔案很大（'+(f.size/1048576).toFixed(0)+' MB），瀏覽器要整個讀進記憶體才能解開，可能很慢或失敗；可以的話請用聲音檔或低畫質版本',6000);
+  setStatus(k,{state:'extract',pct:0});
+  await saveRecording(k,b.story,f);
+  if((LP.status[k]||{}).state==='extract') setStatus(k,{state:'',pct:0});
+});
 window.addEventListener('keydown',e=>{
   if($('#learn').hidden||e.target.matches('input,select,textarea')) return;
   const pl=$('#lpPlayer'), k=curKey(), lr=k&&learned[k];
