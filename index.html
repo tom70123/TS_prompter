@@ -193,6 +193,30 @@ body:not(.show-sothead) .u.sothead:not(.brk) .cd{margin-left:0;flex:1;text-align
 #lResult td,#lResult th{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}
 #lResult td.n{font-variant-numeric:tabular-nums;white-space:nowrap}
 @media (max-width:820px){.lgrid{grid-template-columns:1fr}}
+#memoEd{position:fixed;inset:0;z-index:25;background:var(--bg);overflow:auto}
+.mewrap{max-width:980px;margin:0 auto;padding:0 28px 120px}
+.mehead{position:sticky;top:0;z-index:2;display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;background:var(--bg);padding:18px 0 14px;border-bottom:1px solid var(--line)}
+.mehead h2{margin:0;font-size:22px}
+.mehead .note{flex:1;min-width:240px}
+.mebody{font-size:24px;line-height:1.5;font-weight:600}
+.me-story{margin:34px 0 10px;font-size:15px;color:var(--ink2);font-weight:500;display:flex;gap:10px;align-items:baseline;border-top:2px solid var(--line);padding-top:14px}
+.me-story b{color:var(--sot);font-size:17px}
+.me-sec{font-size:13px;color:var(--ink2);font-weight:500;margin:18px 0 6px;letter-spacing:.05em}
+.me-blk{padding:6px 10px 6px 12px;margin:0 -10px 0 -12px;border-radius:8px;cursor:text}
+.me-blk:hover{background:rgba(255,255,255,.03)}
+.me-blk.sc{margin-top:10px}
+.me-l{display:block}
+.me-l.anchor{color:var(--anchor)}
+.me-l.vo{color:var(--vo)}
+.me-l.sot{color:var(--sot);border-left:4px solid rgba(243,185,78,.55);padding-left:10px}
+.me-t{font-size:12px;color:var(--ink2);font-weight:500;margin-left:8px}
+.memoE{display:block;margin:4px 0 2px;font-size:16px;font-weight:500;line-height:1.5;color:#8fe0cf;white-space:pre-wrap;border-left:4px solid rgba(143,224,207,.55);padding:3px 10px;background:rgba(143,224,207,.07);border-radius:0 6px 6px 0;outline:none;min-height:1.5em}
+.memoE:focus{background:rgba(143,224,207,.14);box-shadow:0 0 0 2px rgba(143,224,207,.5)}
+.memoE:empty{background:none;border-left-color:transparent;padding:0 10px;min-height:0}
+.memoE:empty::before{content:"＋ 備註";color:#8fe0cf;opacity:.28;font-size:13px}
+.me-blk:hover .memoE:empty::before{opacity:.75}
+.memoE:empty:focus{background:rgba(143,224,207,.14);border-left-color:rgba(143,224,207,.55);padding:3px 10px;min-height:1.5em}
+.memoE:empty:focus::before{content:"";}
 @media (max-width:820px){
   #setup{grid-template-columns:1fr;padding:24px 16px 60px}
   #doc{padding-left:12vw;padding-right:5vw}
@@ -206,7 +230,7 @@ body:not(.show-sothead) .u.sothead:not(.brk) .cd{margin-left:0;flex:1;text-align
 <main id="setup">
   <header>
     <h1>新聞提詞機</h1>
-    <p class="ver">版本 2026-11-05c（對齊確認、行距、備註）</p>
+    <p class="ver">版本 2026-11-05d（備註文件模式）</p>
     <p>載入主播稿與 SOT 字幕，依節目聲音讓字幕自動滑動。主播稿靠語音對位；SOT（主播念完後播出的整段影片）學過時間後依記憶推進。</p>
   </header>
 
@@ -221,7 +245,7 @@ body:not(.show-sothead) .u.sothead:not(.brk) .cd{margin-left:0;flex:1;text-align
       </div>
     </div>
     <ol id="list"></ol>
-    <div class="row-end"><button class="btn" id="addBreak" type="button">＋ 插入廣告時段</button><button class="btn" id="openLearn" type="button">SOT 字幕時間（錄音與自動辨識）</button></div>
+    <div class="row-end"><button class="btn" id="addBreak" type="button">＋ 插入廣告時段</button><button class="btn" id="openMemo" type="button">備註編輯（文件模式）</button><button class="btn" id="openLearn" type="button">SOT 字幕時間（錄音與自動辨識）</button></div>
   </section>
 
   <section aria-labelledby="h-opt">
@@ -369,6 +393,16 @@ body:not(.show-sothead) .u.sothead:not(.brk) .cd{margin-left:0;flex:1;text-align
         <p class="note">流程：先按上方「選擇擷取來源」（選播放影片的分頁，或整個螢幕並勾選「分享系統音訊」），之後來源會一直保持。左邊選一則新聞，按「開始錄音」，在雲端系統播放這則的 SOT，播完按「停止錄音」。錄好會自動在背景辨識並算出每句字幕的時間，你可以接著錄下一則。<br>檢查方式：按播放器播放，上方會依時間顯示字幕。播放中按空白鍵，會把「下一句」的開始時間設在當下；表格裡的 − ＋ 可以微調單句。修改會自動儲存。</p>
       </section>
     </div>
+  </div>
+</div>
+<div id="memoEd" hidden>
+  <div class="mewrap">
+    <div class="mehead">
+      <h2>備註編輯</h2>
+      <span class="note">直接點每一句下方的「＋ 備註」打字，可以換行，打完自動儲存。播出時會顯示在該句下方。</span>
+      <button class="btn primary" id="memoClose" type="button">完成</button>
+    </div>
+    <div id="meBody" class="mebody"></div>
   </div>
 </div>
 <div id="toast" hidden></div>
@@ -575,7 +609,9 @@ function parseStory(lines,name){
   for(const b of sotBlocks(units)) b.head.key='sot-'+hashStr((b.head.name||'')+'|'+b.lines.map(x=>x.text).join('/'));
   const pi=units.findIndex(u=>u.type==='pkg');
   if(pi>=0) units[pi].key='pkg-'+hashStr(pkgLines(units,pi).map(x=>x.text).join('/'));
-  return {name:name||'未命名',units};
+  const anc=units.filter(u=>u.type==='anchor');
+  const ankey=anc.length?'anc-'+hashStr(anc.map(x=>x.text).join('/')):null;
+  return {name:name||'未命名',units,ankey};
 }
 
 /* ---------- SOT 分句與識別碼 ---------- */
@@ -668,8 +704,8 @@ function normalize(text){
 function keysFromText(t){ return normalize(t).map(e=>e.k); }
 
 /* ---------- 文件組裝 ---------- */
-function buildDoc(stories,learned){
-  learned=learned||{};
+function buildDoc(stories,learned,memos){
+  learned=learned||{}; memos=memos||{};
   const units=[], stream=[], tracked=[];
   stories.forEach((st,si)=>{
     if(st.type==='break'){   // 廣告時段：只有一條倒數時間軸
@@ -700,6 +736,15 @@ function buildDoc(stories,learned){
         head=null;
       } else if(u.type!=='note'&&!u.inPkg) head=null;
     }
+    // 備註：主播稿逐行；SOT 逐句（掛在該句最後一行）
+    const su=units.filter(x=>x.si===si);
+    const aArr=st.ankey&&memos[st.ankey];
+    if(Array.isArray(aArr)) su.filter(x=>x.type==='anchor').forEach((x,j)=>{ if(aArr[j]) x.memo=aArr[j]; });
+    const pkU=su.find(x=>x.key&&/^pkg-/.test(x.key));
+    if(pkU){
+      const arr=memos[pkU.key]||(learned[pkU.key]&&learned[pkU.key].notes);
+      if(Array.isArray(arr)) makeGroups(pkgLines(units,pkU.ui),0).forEach((g,i)=>{ if(arr[i]) g[g.length-1].memo=arr[i]; });
+    }
   });
   for(const u of units){
     if(u.type!=='sothead') continue;
@@ -714,7 +759,6 @@ function buildDoc(stories,learned){
       groups.forEach((g,si)=>{
         const t0=lr.starts[si], t1=si+1<groups.length?lr.starts[si+1]:lr.total;
         g.forEach(x=>{ x.t0=t0; x.t1=t1; x.scr=si; });
-        if(Array.isArray(lr.notes)&&lr.notes[si]) g[g.length-1].memo=lr.notes[si];
         u.screens.push({lines:g.map(x=>x.ui),t0,t1});
       });
     } else {
@@ -757,8 +801,8 @@ function lcs(H,S,s0,s1){
 /* ---------- 追蹤引擎（不碰畫面，方便測試） ---------- */
 class Engine{
   constructor(opt){ this.opt=Object.assign({autoSot:true,sotDelay:0.6,grace:0.5,maxWait:3,soundGate:false,predict:true,lead:20,predictMs:8000,resync:true,verifyWin:20},opt||{}); this.setStories([]); }
-  setStories(stories,learned){
-    const d=buildDoc(stories,learned);
+  setStories(stories,learned,memos){
+    const d=buildDoc(stories,learned,memos);
     this.units=d.units; this.stream=d.stream; this.tracked=d.tracked; this.N=d.stream.length;
     this.heads=d.units.filter(u=>u.type==='sothead');
     this.reset();
@@ -1203,6 +1247,18 @@ const saveSettings=()=>{ try{ localStorage.setItem('newsprompter.settings',JSON.
 
 const stories=[];
 let resumeRef=null;
+let memos={};
+try{ memos=JSON.parse(localStorage.getItem('newsprompter.memos')||'{}')||{}; }catch(e){ memos={}; }
+let memoSaveT=0;
+const saveMemos=()=>{ clearTimeout(memoSaveT); memoSaveT=setTimeout(()=>{ try{ localStorage.setItem('newsprompter.memos',JSON.stringify(memos)); }catch(e){ toast('無法儲存備註'); } },300); };
+setTimeout(()=>{ let moved=0; for(const k in learned){ const n=learned[k]&&learned[k].notes; if(Array.isArray(n)&&n.some(Boolean)&&!memos[k]){ memos[k]=n.slice(); moved++; } } if(moved) saveMemos(); },0);
+function getMemo(key,i){ const a=memos[key]; return Array.isArray(a)&&a[i]||''; }
+function setMemo(key,i,len,text){
+  let a=memos[key]; if(!Array.isArray(a)||a.length!==len) a=Array.from({length:len},(_,j)=>(Array.isArray(a)&&a[j])||'');
+  a[i]=text; if(a.some(x=>x&&x.trim())) memos[key]=a; else delete memos[key];
+  if(learned[key]&&learned[key].notes){ delete learned[key].notes; saveLearned(); }
+  saveMemos();
+}
 let learned={};
 try{ learned=JSON.parse(localStorage.getItem('newsprompter.learned')||'{}')||{}; }catch(e){ learned={}; }
 const saveLearned=()=>{ try{ localStorage.setItem('newsprompter.learned',JSON.stringify(learned)); }catch(e){ toast('無法儲存學習結果，請用「匯出時間檔」備份'); } };
@@ -1375,6 +1431,7 @@ function renderList(){
   }
   $('#goHint').textContent=stories.length?'':'先載入至少一則稿件。';
   $('#openLearn').disabled=!stories.some(st=>st.units.some(u=>u.type==='pkg'));
+  $('#openMemo').disabled=!stories.some(st=>st.type!=='break');
   $('#openLearn').title=$('#openLearn').disabled?'目前載入的稿件都沒有找到 SOT 段落（=======之後的內容）':'';
 }
 $('#addBreak').addEventListener('click',()=>{ stories.push({type:'break',name:'廣告',sec:60,units:[]}); renderList(); toast('已加入廣告時段，可以拖曳到想要的位置'); });
@@ -1416,7 +1473,7 @@ function renderDoc(){
     else if(u.type==='sothead') d.innerHTML='<div class="wt"></div><span class="tag">原音</span><span class="who">'+esc(u.name||'')+'</span><span class="dur">'+(u.learned?'已學習 '+u.sec.toFixed(1)+' 秒，':u.sec+' 秒，')+u.screens.length+' 句</span><span class="cd"></span><div class="bar"><i></i></div>';
     else if(u.type==='sotlabel') d.innerHTML='<span class="tag">原音</span><span class="who">'+esc(u.name||'')+'</span><span class="dur">國語，用語音追蹤</span>';
     else if(u.type==='end') d.textContent=u.text;
-    else{ d.textContent=u.text; if(u.memo){ const m=document.createElement('div'); m.className='memo'; m.textContent=u.memo; d.appendChild(m); } if(u.sc) d.classList.add('sc'); if(u.sot) d.classList.add('sotv'); if(u.look==='vo') d.classList.add('vo-look'); }
+    else{ const tx=document.createElement('span'); tx.className='tx'; tx.textContent=u.text; d.appendChild(tx); if(u.memo){ const m=document.createElement('div'); m.className='memo'; m.textContent=u.memo; d.appendChild(m); } if(u.sc) d.classList.add('sc'); if(u.sot) d.classList.add('sotv'); if(u.look==='vo') d.classList.add('vo-look'); }
     if(u.type==='anchor'||u.type==='vo'||u.type==='sot'||u.type==='sothead') d.classList.add('tap');
     if(u.brk) d.classList.add('brk');
     doc.appendChild(d); els.push(d);
@@ -1443,7 +1500,7 @@ $('#pane').addEventListener('wheel',e=>{
 },{passive:false});
 
 function setCurText(u,readRaw){
-  const el=els[u.ui];
+  const el=els[u.ui].querySelector('.tx')||els[u.ui];
   if(u.s1===undefined||readRaw<=0){ el.textContent=u.text; return; }
   el.innerHTML='<span class="rd">'+esc(u.text.slice(0,readRaw))+'</span>'+esc(u.text.slice(readRaw));
 }
@@ -1458,7 +1515,7 @@ function frame(now){
   eng.tick(now);
   const f=eng.focusUi(), u=eng.units[f];
   if(f!==shown.ui){
-    if(shown.ui>=0){ const pu=eng.units[shown.ui]; if(pu.s1!==undefined) els[shown.ui].textContent=pu.text; }
+    if(shown.ui>=0){ const pu=eng.units[shown.ui]; if(pu.s1!==undefined) (els[shown.ui].querySelector('.tx')||els[shown.ui]).textContent=pu.text; }
     shown.ui=f; shown.readRaw=-1;
     while(shown.marked<f){ els[shown.marked].classList.add('past'); shown.marked++; }
     while(shown.marked>f){ shown.marked--; els[shown.marked].classList.remove('past'); }
@@ -1853,12 +1910,12 @@ function renderTable(){
   const b=curBlock(), k=curKey(), lr=k&&learned[k];
   $('#lpPv').hidden=!(lr&&LP.info[k]); $('#lpAdj').hidden=!lr; LP.lastI=-2;
   if(!b){ $('#lpTable').innerHTML=''; return; }
-  let rows='<tr><th>句</th><th>開始</th><th>依據</th><th>字幕</th><th>備註（播出時顯示在字幕下方）</th></tr>';
+  let rows='<tr><th>句</th><th>開始</th><th>依據</th><th>字幕</th><th>備註（播出時顯示在字幕下方）　<button class="btn small" id="lpMemoDoc" type="button">用文件模式編輯</button></th></tr>';
   b.groups.forEach((g,i)=>{
     const t=lr&&lr.starts[i]!=null?lr.starts[i]:null;
-    const memo=lr&&Array.isArray(lr.notes)&&lr.notes[i]||'';
+    const memo=getMemo(k,i);
     const basis=!lr?'':lr.source==='manual'?'手動':(lr.anchored&&lr.anchored[i]?'<span class="ok">辨識對上</span>':'推估');
-    rows+='<tr data-i="'+i+'"><td class="n">'+(i+1)+((g[0].type==='sot'||g[0].sot)?' 原音':'')+'</td><td class="n">'+(t!=null?t.toFixed(1)+' 秒 <button class="btn small nb" data-n="-0.3" type="button">−</button><button class="btn small nb" data-n="0.3" type="button">＋</button>':'—')+'</td><td class="n">'+basis+'</td><td>'+g.map(x=>esc(x.text)).join('<br>')+'</td><td class="mc">'+(lr?'<textarea class="memoIn" rows="1" data-i="'+i+'" placeholder="點這裡輸入">'+esc(memo)+'</textarea>':'')+'</td></tr>';
+    rows+='<tr data-i="'+i+'"><td class="n">'+(i+1)+((g[0].type==='sot'||g[0].sot)?' 原音':'')+'</td><td class="n">'+(t!=null?t.toFixed(1)+' 秒 <button class="btn small nb" data-n="-0.3" type="button">−</button><button class="btn small nb" data-n="0.3" type="button">＋</button>':'—')+'</td><td class="n">'+basis+'</td><td>'+g.map(x=>esc(x.text)).join('<br>')+'</td><td class="mc">'+(true?'<textarea class="memoIn" rows="1" data-i="'+i+'" placeholder="點這裡輸入">'+esc(memo)+'</textarea>':'')+'</td></tr>';
   });
   $('#lpTable').innerHTML=rows;
   document.querySelectorAll('#lpTable textarea.memoIn').forEach(t=>{ t.style.height='auto'; t.style.height=t.scrollHeight+'px'; });
@@ -1869,10 +1926,8 @@ let memoTimer=0;
 $('#lpTable').addEventListener('input',e=>{
   const ta=e.target.closest('textarea.memoIn'); if(!ta) return;
   ta.style.height='auto'; ta.style.height=ta.scrollHeight+'px';
-  const k=curKey(), lr=learned[k], b=curBlock(); if(!lr||!b) return;
-  if(!Array.isArray(lr.notes)||lr.notes.length!==b.groups.length) lr.notes=b.groups.map((_,i)=>(Array.isArray(lr.notes)&&lr.notes[i])||'');
-  lr.notes[+ta.dataset.i]=ta.value;
-  clearTimeout(memoTimer); memoTimer=setTimeout(()=>{ saveLearned(); LP.lastI=-2; },400);
+  const k=curKey(), b=curBlock(); if(!b) return;
+  setMemo(k,+ta.dataset.i,b.groups.length,ta.value); LP.lastI=-2;
 });
 $('#lpTable').addEventListener('click',e=>{
   if(e.target.closest('textarea')) return;
@@ -1906,7 +1961,7 @@ function pvLoop(){
     if(i!==LP.lastI){
       LP.lastI=i;
       $('#lpPvIdx').textContent=i>=0?('第 '+(i+1)+' / '+b.groups.length+' 句'):(i===-3?'SOT 已結束':'SOT 開始前');
-      const mm=i>=0&&Array.isArray(lr.notes)?lr.notes[i]:'';
+      const mm=i>=0?getMemo(k,i):'';
       $('#lpPvText').innerHTML=(i>=0?b.groups[i].map(x=>esc(x.text)).join('<br>'):'')+(mm?'<div class="memo">'+esc(mm)+'</div>':'');
       document.querySelectorAll('#lpTable tr[data-i]').forEach(tr=>tr.classList.toggle('on',+tr.dataset.i===i));
       const on=document.querySelector('#lpTable tr.on'); if(on&&!pl.paused) on.scrollIntoView({block:'nearest'});
@@ -2025,7 +2080,7 @@ window.addEventListener('keydown',e=>{
   else if(e.key==='Escape'){ e.preventDefault(); closeLearn(); }
 });
 $('#lpExport').addEventListener('click',()=>{
-  const blob=new Blob([JSON.stringify({app:'newsprompter',version:2,learned},null,2)],{type:'application/json'});
+  const blob=new Blob([JSON.stringify({app:'newsprompter',version:3,learned,memos},null,2)],{type:'application/json'});
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
   a.download='字幕時間檔_'+new Date().toISOString().slice(0,10)+'.json'; document.body.appendChild(a); a.click(); a.remove();
 });
@@ -2034,7 +2089,9 @@ $('#lpImportT').addEventListener('change',async e=>{
   try{
     const j=JSON.parse(await f.text()); const src=j&&j.learned?j.learned:j; let n=0;
     for(const kk in src){ const v=src[kk]; if(/^(sot|pkg)-[0-9a-f]{8}$/.test(kk)&&v&&v.total>0&&Array.isArray(v.starts)){ learned[kk]=v; n++; } }
-    saveLearned(); toast('已匯入 '+n+' 則字幕時間'); renderSotList(); renderDetail(); renderList();
+    let m=0; if(j&&j.memos) for(const kk in j.memos){ if(/^(pkg|anc)-[0-9a-f]{8}$/.test(kk)&&Array.isArray(j.memos[kk])){ memos[kk]=j.memos[kk]; m++; } }
+    if(m) saveMemos();
+    saveLearned(); toast('已匯入 '+n+' 則字幕時間'+(m?'、'+m+' 段備註':'')); renderSotList(); renderDetail(); renderList();
   }catch(err){ toast('匯入失敗：檔案格式不對'); }
 });
 
@@ -2051,11 +2108,55 @@ function learnBlocks(){
   return out;
 }
 
+/* ---------- 備註編輯（文件模式） ---------- */
+function renderMemoEd(focusKey){
+  const box=$('#meBody'); box.innerHTML=''; let no=0, first=null;
+  const blk=(linesHtml,key,i,len,sc)=>{
+    const d=document.createElement('div'); d.className='me-blk'+(sc?' sc':'');
+    d.innerHTML=linesHtml;
+    const m=document.createElement('div'); m.className='memoE';
+    try{ m.contentEditable='plaintext-only'; }catch(e){}
+    if(m.contentEditable!=='plaintext-only') m.contentEditable='true';
+    m.textContent=getMemo(key,i);
+    m.addEventListener('input',()=>{ const t=m.innerText.replace(/\n$/,''); setMemo(key,i,len,t); if(!t.trim()) m.innerHTML=''; });
+    m.addEventListener('keydown',e=>{ if(e.key==='Escape'){ e.preventDefault(); m.blur(); } });
+    d.appendChild(m);
+    d.addEventListener('mousedown',e=>{ if(e.target!==m&&!m.contains(e.target)){ e.preventDefault(); m.focus(); placeEnd(m); } });
+    box.appendChild(d);
+    if(!first&&focusKey&&key===focusKey) first=d;
+  };
+  stories.forEach(st=>{
+    if(st.type==='break') return; no++;
+    const h=document.createElement('div'); h.className='me-story'; h.innerHTML='<b>'+no+'</b><span>'+esc(st.name)+'</span>'; box.appendChild(h);
+    const anc=st.units.filter(u=>u.type==='anchor');
+    if(anc.length&&st.ankey){
+      const sec=document.createElement('div'); sec.className='me-sec'; sec.textContent='主播稿'; box.appendChild(sec);
+      anc.forEach((u,j)=>blk('<span class="me-l anchor">'+esc(u.text)+'</span>',st.ankey,j,anc.length,false));
+    }
+    const pi=st.units.findIndex(u=>u.type==='pkg');
+    if(pi>=0){
+      const groups=makeGroups(pkgLines(st.units,pi),0), key=st.units[pi].key, lr=learned[key];
+      const sec=document.createElement('div'); sec.className='me-sec'; sec.textContent='SOT'+(lr?'（已學習時間）':''); box.appendChild(sec);
+      groups.forEach((g,i)=>{
+        const t=lr&&lr.starts&&lr.starts[i]!=null?'<span class="me-t">'+lr.starts[i].toFixed(1)+' 秒</span>':'';
+        blk(g.map((x,j)=>'<span class="me-l '+((x.type==='sot'||x.sot)?'sot':'vo')+'">'+esc(x.text)+(j===0?t:'')+'</span>').join(''),key,i,groups.length,i>0);
+      });
+    }
+  });
+  if(!no) box.innerHTML='<p class="note" style="margin-top:30px">尚未載入稿件。</p>';
+  if(first) first.scrollIntoView({block:'start'});
+}
+function placeEnd(el){ try{ const r=document.createRange(); r.selectNodeContents(el); r.collapse(false); const sel=getSelection(); sel.removeAllRanges(); sel.addRange(r); }catch(e){} }
+function openMemoEd(focusKey){ $('#memoEd').hidden=false; renderMemoEd(focusKey); }
+$('#openMemo').addEventListener('click',()=>openMemoEd());
+$('#memoClose').addEventListener('click',()=>{ $('#memoEd').hidden=true; if(!$('#learn').hidden) renderTable(); });
+document.addEventListener('click',e=>{ if(e.target&&e.target.id==='lpMemoDoc'){ e.stopPropagation(); openMemoEd(curKey()); } },true);
+
 /* ---------- 開始與結束 ---------- */
 async function start(resume){
   if(!stories.length) return;
   eng=new Engine({verifyWin:settings.verifyWin,resync:settings.resync!==false,autoSot:settings.autoSot,grace:settings.grace,maxWait:settings.maxWait,predict:settings.predict,lead:settings.lead});
-  eng.setStories(stories,learned);
+  eng.setStories(stories,learned,memos);
   $('#setup').hidden=true; $('#stage').hidden=false;
   applyStageStyle(); renderDoc();
   if(resume&&resumeRef) applyResume(resumeRef);
