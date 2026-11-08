@@ -130,6 +130,15 @@ body:not(.show-sothead) .u.sothead:not(.brk) .cd{margin-left:0;flex:1;text-align
 #heard{flex:1;min-width:140px;color:var(--ink2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #hud .btns{display:flex;gap:6px;flex-wrap:wrap}
 #hud .btn.on{border-color:var(--sot);color:var(--sot)}
+#dispPanel{position:fixed;right:14px;bottom:64px;z-index:12;width:min(360px,92vw);max-height:calc(100vh - 90px);overflow:auto;background:rgba(18,23,28,.96);border:1px solid var(--line);border-radius:10px;padding:12px 16px 14px;display:flex;flex-direction:column;gap:12px;font-size:14px;box-shadow:0 8px 30px rgba(0,0,0,.45)}
+#dispPanel[hidden]{display:none}
+#dispPanel label{display:flex;flex-direction:column;gap:5px;color:var(--ink2)}
+#dispPanel label.inline{flex-direction:row;align-items:center;gap:8px;color:var(--ink)}
+#dispPanel .val{color:var(--ink);font-weight:600}
+#dispPanel input[type=range]{width:100%;accent-color:var(--sot)}
+#dispPanel select{background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:6px 8px}
+.dp-head{display:flex;align-items:center;gap:10px}
+.dp-head .note{flex:1;margin:0}
 #help{position:fixed;right:14px;bottom:64px;z-index:11;background:rgba(12,16,20,.96);border:1px solid var(--line);border-radius:8px;padding:14px 18px;font-size:14px;line-height:1.9;max-width:360px}
 #help kbd{background:var(--panel2);border:1px solid var(--line);border-radius:4px;padding:1px 7px;font-family:inherit;font-weight:700}
 #toast{position:fixed;left:50%;top:18px;transform:translateX(-50%);z-index:12;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:10px 16px;font-size:15px;max-width:86vw}
@@ -137,8 +146,11 @@ body:not(.show-sothead) .u.sothead:not(.brk) .cd{margin-left:0;flex:1;text-align
 .u.pkgmark{display:none}
 .u.sot.vo-look{color:var(--vo);border-left-color:rgba(156,196,236,.45)}
 .u.sot.vo-look.cur{background:rgba(156,196,236,.10)}
-.rec-row{align-items:center;margin-top:16px;padding-top:12px;border-top:1px solid var(--line)}
-.rec-row .note{margin-right:auto}
+details.more{margin-top:22px;color:var(--ink2);font-size:14px}
+details.more summary{cursor:pointer;user-select:none;opacity:.8}
+details.more summary:hover{opacity:1}
+details.more .row-start{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+details.more .note{margin:8px 0 0}
 .row-end{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;margin-top:10px}
 #list li[draggable=true]{cursor:grab}
 #list li.dragging{opacity:.4}
@@ -256,7 +268,7 @@ body:not(.show-sothead) .u.sothead:not(.brk) .cd{margin-left:0;flex:1;text-align
 <main id="setup">
   <header>
     <h1>新聞提詞機</h1>
-    <p class="ver">版本 2026-11-06c（儲存空間管理）</p>
+    <p class="ver">版本 2026-11-06d（顯示設定移到播出畫面）</p>
     <p>載入主播稿與 SOT 字幕，依節目聲音讓字幕自動滑動。主播稿靠語音對位；SOT（主播念完後播出的整段影片）學過時間後依記憶推進。</p>
   </header>
 
@@ -271,56 +283,38 @@ body:not(.show-sothead) .u.sothead:not(.brk) .cd{margin-left:0;flex:1;text-align
       </div>
     </div>
     <ol id="list"></ol>
-    <div class="row-end rec-row"><span class="note">紀錄檔＝SOT 時間軸＋改寫過的顯示文字，可帶到其他電腦</span><button class="btn" id="openStore" type="button">管理儲存空間</button><button class="btn" id="recExport" type="button">匯出紀錄檔</button><label class="btn" for="recImport">匯入紀錄檔</label><input type="file" id="recImport" accept=".json" hidden></div>
     <div class="row-end"><button class="btn" id="addBreak" type="button">＋ 插入廣告時段</button><button class="btn" id="openMemo" type="button">顯示文字（文件模式）</button><button class="btn" id="openLearn" type="button">SOT 字幕時間（錄音與自動辨識）</button></div>
+    <details class="more"><summary>紀錄檔與儲存空間</summary>
+      <p class="note">紀錄檔＝SOT 時間軸＋改寫過的顯示文字，可帶到其他電腦。</p>
+      <div class="row-start"><button class="btn small" id="recExport" type="button">匯出紀錄檔</button><label class="btn small" for="recImport">匯入紀錄檔</label><input type="file" id="recImport" accept=".json" hidden><button class="btn small" id="openStore" type="button">管理儲存空間</button></div>
+    </details>
   </section>
 
   <section aria-labelledby="h-opt">
-    <h2 id="h-opt">顯示與追蹤</h2>
+    <h2 id="h-opt">追蹤設定</h2>
     <div class="opts">
-      <label>字級 <span class="val" id="fsVal"></span>
-        <input type="range" id="fs" min="28" max="120" step="2">
-      </label>
-      <label>行距 <span class="val" id="lhVal"></span>
-        <input type="range" id="lh" min="1" max="2" step="0.05">
-      </label>
-      <label>句與句之間的間距 <span class="val" id="gapVal"></span>
-        <input type="range" id="gap" min="0" max="1" step="0.05">
-      </label>
-      <label>鏡像
-        <select id="mirror">
-          <option value="none">正常</option>
-          <option value="h">左右鏡像（分光鏡提詞架）</option>
-          <option value="v">上下顛倒</option>
-          <option value="hv">左右鏡像＋上下顛倒（等於旋轉 180 度）</option>
-        </select>
-      </label>
-      <label>閱讀線位置 <span class="val" id="cyVal"></span>
-        <input type="range" id="cy" min="15" max="60" step="1">
-      </label>
       <label>麥克風
         <select id="mic"><option value="">系統預設</option></select>
       </label>
       <label class="inline"><input type="checkbox" id="micTrack"> 把所選麥克風直接送進辨識（實驗功能，辨識沒反應時請取消）</label>
       <p class="note" id="micNote">第一次允許麥克風後，這裡才會列出各裝置的名稱。</p>
       <label class="inline"><input type="checkbox" id="autoSot"> 主播念完後自動開始 SOT 字幕</label>
-      <label>之後一有聲音就開始；一直沒聲音時，最多再等幾秒就開始
+      <label>念完後沒聲音，最多等幾秒開始
         <input type="number" id="maxWait" min="0" max="15" step="0.5">
       </label>
       <label class="inline"><input type="checkbox" id="predict"> 辨識沒跟上時，依語速推估繼續滑動</label>
       <label>推估最多領先辨識位置幾個字
-        <input type="number" id="lead" min="6" max="80" step="2">
+        <input type="number" id="lead" min="6" max="200" step="2">
       </label>
       <label>辨識停滯幾秒後自動重開
         <input type="number" id="stall" min="3" max="30" step="1">
       </label>
       <label class="inline"><input type="checkbox" id="meterOn"> 顯示麥克風音量條（辨識異常時可取消勾選試試）</label>
-      <label class="inline"><input type="checkbox" id="showNotes"> 顯示稿上的備註與畫面提示</label>
-      <label class="inline"><input type="checkbox" id="showSotHead"> 顯示受訪原音標頭（姓名、秒數、句數）</label>
       <button class="btn primary" id="goResume" type="button" hidden>從中斷處繼續</button>
       <button class="btn primary" id="go" type="button">開始</button>
       <p class="note" id="resumeInfo" hidden></p>
       <p class="note" id="goHint"></p>
+      <p class="note">字級、行距、閱讀線、鏡像等顯示設定，請在開始後按畫面下方的「顯示設定」，邊看邊調。</p>
       <p class="note warn" id="fileWarn" hidden>目前是直接開啟檔案（file://），Chrome 不會記住麥克風權限，辨識每次重新連線都會再問一次。請改用 http://localhost 開啟，做法見說明。</p>
       <p class="note">語音辨識使用 Chrome 或 Edge 內建的服務（zh-TW），聲音會送到瀏覽器供應商的伺服器，需要網路。請先在 Windows 的聲音設定把要用的麥克風設為預設錄音裝置。</p>
     </div>
@@ -344,6 +338,7 @@ body:not(.show-sothead) .u.sothead:not(.brk) .cd{margin-left:0;flex:1;text-align
       <button class="btn small" data-act="space" id="spaceBtn">暫停</button>
       <button class="btn small" data-act="fsm">A−</button>
       <button class="btn small" data-act="fsp">A＋</button>
+      <button class="btn small" data-act="disp" id="btnDisp">顯示設定</button>
       <button class="btn small" data-act="flipH" id="btnFlipH">左右鏡像</button>
       <button class="btn small" data-act="flipV" id="btnFlipV">上下顛倒</button>
       <button class="btn small" data-act="full">全螢幕</button>
@@ -351,12 +346,37 @@ body:not(.show-sothead) .u.sothead:not(.brk) .cd{margin-left:0;flex:1;text-align
       <button class="btn small" data-act="back">回設定</button>
     </span>
   </div>
+  <div id="dispPanel" hidden>
+    <div class="dp-head"><b>顯示設定</b><span class="note">調整後立刻生效並自動儲存</span><button class="btn small" id="dispClose" type="button">關閉</button></div>
+      <label>字級 <span class="val" id="fsVal"></span>
+        <input type="range" id="fs" min="28" max="120" step="2">
+      </label>
+      <label>行距 <span class="val" id="lhVal"></span>
+        <input type="range" id="lh" min="1" max="2" step="0.05">
+      </label>
+      <label>句與句之間的間距 <span class="val" id="gapVal"></span>
+        <input type="range" id="gap" min="0" max="1" step="0.05">
+      </label>
+      <label>鏡像
+        <select id="mirror">
+          <option value="none">正常</option>
+          <option value="h">左右鏡像（分光鏡提詞架）</option>
+          <option value="v">上下顛倒</option>
+          <option value="hv">左右鏡像＋上下顛倒（等於旋轉 180 度）</option>
+        </select>
+      </label>
+      <label>閱讀線位置 <span class="val" id="cyVal"></span>
+        <input type="range" id="cy" min="15" max="60" step="1">
+      </label>
+      <label class="inline"><input type="checkbox" id="showNotes"> 顯示稿上的備註與畫面提示</label>
+      <label class="inline"><input type="checkbox" id="showSotHead"> 顯示受訪原音標頭（姓名、秒數、句數）</label>
+  </div>
   <div id="help" hidden>
     <div><kbd>↓</kbd> 下一句　<kbd>↑</kbd> 上一句</div>
     <div><kbd>空白鍵</kbd> 時間軸待命時開始，進行中暫停或繼續，其他時候暫停追蹤</div>
     <div><kbd>[</kbd> <kbd>]</kbd> 時間軸慢一點或快一點</div>
     <div><kbd>M</kbd> 左右鏡像　<kbd>U</kbd> 上下顛倒　<kbd>+</kbd> <kbd>-</kbd> 字級</div>
-    <div><kbd>H</kbd> 隱藏控制列　<kbd>F</kbd> 全螢幕　<kbd>Esc</kbd> 回設定</div>
+    <div><kbd>D</kbd> 顯示設定　<kbd>H</kbd> 隱藏控制列　<kbd>F</kbd> 全螢幕　<kbd>Esc</kbd> 回設定</div>
     <div>滑鼠：滾輪上下一句，左鍵下一句，右鍵上一句，雙擊某一行直接跳到那一行。</div>
   </div>
 </div>
@@ -846,7 +866,7 @@ function lcs(H,S,s0,s1){
 
 /* ---------- 追蹤引擎（不碰畫面，方便測試） ---------- */
 class Engine{
-  constructor(opt){ this.opt=Object.assign({autoSot:true,sotDelay:0.6,grace:0.5,maxWait:3,soundGate:false,predict:true,lead:20,predictMs:8000,resync:true,verifyWin:20},opt||{}); this.setStories([]); }
+  constructor(opt){ this.opt=Object.assign({autoSot:true,sotDelay:0.6,grace:0.5,maxWait:3,soundGate:false,predict:true,lead:100,predictMs:8000,resync:true,verifyWin:20},opt||{}); this.setStories([]); }
   setStories(stories,learned,memos,edits){
     const d=buildDoc(stories,learned,memos,edits);
     this.units=d.units; this.stream=d.stream; this.tracked=d.tracked; this.N=d.stream.length;
@@ -1286,9 +1306,10 @@ if(typeof document!=='undefined'){
 (function(){
 const $=s=>document.querySelector(s);
 const esc=s=>s.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
-const DEFAULTS={mic:'',font:56,mirror:'none',cursor:33,autoSot:true,sotDelay:0.6,grace:0.5,maxWait:3,showNotes:true,showMemo:true,autoDelRecDays:7,autoDelAfterRec:false,showSotHead:false,lh:1.5,gap:0.45,verifyWin:20,stall:5,meter:true,predict:true,lead:20,micTrack:false};
+const DEFAULTS={mic:'',font:56,mirror:'none',cursor:33,autoSot:true,sotDelay:0.6,grace:0.5,maxWait:3,showNotes:true,showMemo:true,autoDelRecDays:7,autoDelAfterRec:false,showSotHead:false,lh:1.5,gap:0.45,verifyWin:20,stall:5,meter:true,predict:true,lead:100,micTrack:false};
 let settings=Object.assign({},DEFAULTS);
 try{ Object.assign(settings,JSON.parse(localStorage.getItem('newsprompter.settings')||'{}')); }catch(e){}
+if(!settings.v||settings.v<2){ if(+settings.lead===20) settings.lead=100; settings.v=2; try{ localStorage.setItem('newsprompter.settings',JSON.stringify(settings)); }catch(e){} }
 const saveSettings=()=>{ try{ localStorage.setItem('newsprompter.settings',JSON.stringify(settings)); }catch(e){} };
 
 const stories=[];
@@ -1410,7 +1431,7 @@ bindSetting('maxWait','maxWait',el=>Math.max(0,Math.min(15,+el.value||0)));
 bindSetting('showNotes','showNotes',el=>el.checked);
 bindSetting('predict','predict',el=>el.checked);
 bindSetting('micTrack','micTrack',el=>el.checked);
-bindSetting('lead','lead',el=>Math.max(6,Math.min(80,+el.value||20)));
+bindSetting('lead','lead',el=>Math.max(6,Math.min(200,+el.value||100)));
 bindSetting('stall','stall',el=>Math.max(3,Math.min(30,+el.value||5)));
 bindSetting('meterOn','meter',el=>el.checked);
 bindSetting('showSotHead','showSotHead',el=>el.checked);
@@ -2389,8 +2410,10 @@ function act(a){
   }
   else if(a==='full'){ if(document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen(); }
   else if(a==='help') $('#help').hidden=!$('#help').hidden;
+  else if(a==='disp'){ $('#dispPanel').hidden=!$('#dispPanel').hidden; $('#btnDisp').classList.toggle('on',!$('#dispPanel').hidden); applySettingsToUi(); }
   else if(a==='back') stop();
 }
+$('#dispClose').addEventListener('click',()=>{ $('#dispPanel').hidden=true; $('#btnDisp').classList.remove('on'); });
 $('#hud').addEventListener('click',e=>{ const b=e.target.closest('button[data-act]'); if(b){ act(b.dataset.act); b.blur(); } });
 window.addEventListener('keydown',e=>{
   if(!running||e.target.matches('input,select,textarea')) return;
@@ -2407,6 +2430,7 @@ window.addEventListener('keydown',e=>{
   else if(k==='h'||k==='H') $('#hud').hidden=!$('#hud').hidden;
   else if(k==='f'||k==='F') act('full');
   else if(k==='?') act('help');
+  else if(k==='d'||k==='D') act('disp');
   else if(k==='Escape'&&!document.fullscreenElement) act('back');
   else used=false;
   if(used) e.preventDefault();
