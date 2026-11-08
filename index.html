@@ -96,6 +96,7 @@ button{cursor:pointer}
 .u.end{font-size:.4em;font-weight:400;color:var(--read);margin:.6em 0 1em;text-align:right}
 body.no-notes .u.note{display:none}
 .u .wt{display:none}
+.u .tx{white-space:pre-wrap}
 .u .memo{font-size:.42em;font-weight:500;line-height:1.45;color:#8fe0cf;border-left:.3em solid rgba(143,224,207,.55);padding:.15em .6em;margin:.35em 0 .1em;white-space:pre-wrap;background:rgba(143,224,207,.07);border-radius:0 .3em .3em 0}
 body.no-memo .u .memo{display:none}
 .u.sothead.wait{display:flex!important;margin:.6em 0 .6em}
@@ -136,6 +137,8 @@ body:not(.show-sothead) .u.sothead:not(.brk) .cd{margin-left:0;flex:1;text-align
 .u.pkgmark{display:none}
 .u.sot.vo-look{color:var(--vo);border-left-color:rgba(156,196,236,.45)}
 .u.sot.vo-look.cur{background:rgba(156,196,236,.10)}
+.rec-row{align-items:center;margin-top:16px;padding-top:12px;border-top:1px solid var(--line)}
+.rec-row .note{margin-right:auto}
 .row-end{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;margin-top:10px}
 #list li[draggable=true]{cursor:grab}
 #list li.dragging{opacity:.4}
@@ -193,6 +196,19 @@ body:not(.show-sothead) .u.sothead:not(.brk) .cd{margin-left:0;flex:1;text-align
 #lResult td,#lResult th{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}
 #lResult td.n{font-variant-numeric:tabular-nums;white-space:nowrap}
 @media (max-width:820px){.lgrid{grid-template-columns:1fr}}
+#lpPair{position:fixed;inset:0;z-index:30;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:20px}
+#lpPair[hidden]{display:none}
+#storeDlg{position:fixed;inset:0;z-index:30;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:20px}
+#storeDlg[hidden]{display:none}
+.st-sec{border-top:1px solid var(--line);padding:14px 0 6px}
+.st-sec h4{margin:0 0 4px;font-size:16px}
+.st-sec .num{color:var(--sot);font-weight:700}
+.st-sec .lrow{margin:8px 0 0}
+.st-sec input[type=number]{width:70px;background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:4px 6px;color:inherit;font:inherit}
+.btn.danger{border-color:#7a3b35;color:#f0a58f}
+.lpPairBox{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:20px 22px;width:min(900px,96vw);max-height:90vh;overflow:auto}
+.lpPairBox h3{margin:0 0 6px;font-size:19px}
+#lpPairTable select{width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:5px 8px;color:inherit;font:inherit}
 #memoEd{position:fixed;inset:0;z-index:25;background:var(--bg);overflow:auto}
 .mewrap{max-width:980px;margin:0 auto;padding:0 28px 120px}
 .mehead{position:sticky;top:0;z-index:2;display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;background:var(--bg);padding:18px 0 14px;border-bottom:1px solid var(--line)}
@@ -205,10 +221,20 @@ body:not(.show-sothead) .u.sothead:not(.brk) .cd{margin-left:0;flex:1;text-align
 .me-blk{padding:6px 10px 6px 12px;margin:0 -10px 0 -12px;border-radius:8px;cursor:text}
 .me-blk:hover{background:rgba(255,255,255,.03)}
 .me-blk.sc{margin-top:10px}
-.me-l{display:block}
+.me-row{display:flex;flex-wrap:wrap;align-items:baseline;gap:0 8px;position:relative}
+.me-orig{display:none;flex-basis:100%;font-size:13px;font-weight:400;color:var(--ink2);opacity:.75;margin:1px 0 3px}
+.me-row.mod .me-orig{display:block}
+.me-l{display:block;flex:1;white-space:pre-wrap;outline:none;border-radius:4px;padding:0 4px;margin:0 -4px;min-height:1.5em}
+.me-l:hover{background:rgba(255,255,255,.04)}
+.me-l:focus{background:rgba(255,255,255,.07);box-shadow:0 0 0 2px rgba(255,255,255,.18)}
+.me-l:empty::before{content:"（這行播出時不顯示文字）";font-size:14px;font-weight:400;color:var(--ink2);opacity:.6}
+.me-row.mod .me-l{text-decoration:underline dotted rgba(255,255,255,.45);text-underline-offset:5px}
+.me-row.mod::before{content:"改";position:absolute;left:-30px;top:.3em;font-size:11px;font-weight:700;color:var(--bg);background:#c9a6ff;border-radius:3px;padding:0 4px;line-height:1.6}
+.me-rv{display:none;flex:none;font-size:12px;font-weight:500;background:var(--panel2);border:1px solid var(--line);border-radius:4px;color:var(--ink2);padding:2px 8px;cursor:pointer}
+.me-row.mod:hover .me-rv,.me-row.mod:focus-within .me-rv{display:inline-block}
 .me-l.anchor{color:var(--anchor)}
 .me-l.vo{color:var(--vo)}
-.me-l.sot{color:var(--sot);border-left:4px solid rgba(243,185,78,.55);padding-left:10px}
+.me-l.sot{color:var(--sot);border-left:4px solid rgba(243,185,78,.55);padding-left:10px;margin-left:0}
 .me-t{font-size:12px;color:var(--ink2);font-weight:500;margin-left:8px}
 .memoE{display:block;margin:4px 0 2px;font-size:16px;font-weight:500;line-height:1.5;color:#8fe0cf;white-space:pre-wrap;border-left:4px solid rgba(143,224,207,.55);padding:3px 10px;background:rgba(143,224,207,.07);border-radius:0 6px 6px 0;outline:none;min-height:1.5em}
 .memoE:focus{background:rgba(143,224,207,.14);box-shadow:0 0 0 2px rgba(143,224,207,.5)}
@@ -230,7 +256,7 @@ body:not(.show-sothead) .u.sothead:not(.brk) .cd{margin-left:0;flex:1;text-align
 <main id="setup">
   <header>
     <h1>新聞提詞機</h1>
-    <p class="ver">版本 2026-11-05d（備註文件模式）</p>
+    <p class="ver">版本 2026-11-06c（儲存空間管理）</p>
     <p>載入主播稿與 SOT 字幕，依節目聲音讓字幕自動滑動。主播稿靠語音對位；SOT（主播念完後播出的整段影片）學過時間後依記憶推進。</p>
   </header>
 
@@ -245,7 +271,8 @@ body:not(.show-sothead) .u.sothead:not(.brk) .cd{margin-left:0;flex:1;text-align
       </div>
     </div>
     <ol id="list"></ol>
-    <div class="row-end"><button class="btn" id="addBreak" type="button">＋ 插入廣告時段</button><button class="btn" id="openMemo" type="button">備註編輯（文件模式）</button><button class="btn" id="openLearn" type="button">SOT 字幕時間（錄音與自動辨識）</button></div>
+    <div class="row-end rec-row"><span class="note">紀錄檔＝SOT 時間軸＋改寫過的顯示文字，可帶到其他電腦</span><button class="btn" id="openStore" type="button">管理儲存空間</button><button class="btn" id="recExport" type="button">匯出紀錄檔</button><label class="btn" for="recImport">匯入紀錄檔</label><input type="file" id="recImport" accept=".json" hidden></div>
+    <div class="row-end"><button class="btn" id="addBreak" type="button">＋ 插入廣告時段</button><button class="btn" id="openMemo" type="button">顯示文字（文件模式）</button><button class="btn" id="openLearn" type="button">SOT 字幕時間（錄音與自動辨識）</button></div>
   </section>
 
   <section aria-labelledby="h-opt">
@@ -277,14 +304,8 @@ body:not(.show-sothead) .u.sothead:not(.brk) .cd{margin-left:0;flex:1;text-align
       <label class="inline"><input type="checkbox" id="micTrack"> 把所選麥克風直接送進辨識（實驗功能，辨識沒反應時請取消）</label>
       <p class="note" id="micNote">第一次允許麥克風後，這裡才會列出各裝置的名稱。</p>
       <label class="inline"><input type="checkbox" id="autoSot"> 主播念完後自動開始 SOT 字幕</label>
-      <label>主播念完後，先忽略幾秒的聲音（避開主播尾音）
-        <input type="number" id="grace" min="0" max="3" step="0.1">
-      </label>
       <label>之後一有聲音就開始；一直沒聲音時，最多再等幾秒就開始
         <input type="number" id="maxWait" min="0" max="15" step="0.5">
-      </label>
-      <label>SOT 開始後幾秒內，用國語辨識確認一次對齊（0 為不確認）
-        <input type="number" id="verifyWin" min="0" max="120" step="5">
       </label>
       <label class="inline"><input type="checkbox" id="predict"> 辨識沒跟上時，依語速推估繼續滑動</label>
       <label>推估最多領先辨識位置幾個字
@@ -294,7 +315,6 @@ body:not(.show-sothead) .u.sothead:not(.brk) .cd{margin-left:0;flex:1;text-align
         <input type="number" id="stall" min="3" max="30" step="1">
       </label>
       <label class="inline"><input type="checkbox" id="meterOn"> 顯示麥克風音量條（辨識異常時可取消勾選試試）</label>
-      <label class="inline"><input type="checkbox" id="showMemo"> 顯示我加的備註（SOT 字幕時間裡填寫）</label>
       <label class="inline"><input type="checkbox" id="showNotes"> 顯示稿上的備註與畫面提示</label>
       <label class="inline"><input type="checkbox" id="showSotHead"> 顯示受訪原音標頭（姓名、秒數、句數）</label>
       <button class="btn primary" id="goResume" type="button" hidden>從中斷處繼續</button>
@@ -351,6 +371,8 @@ body:not(.show-sothead) .u.sothead:not(.brk) .cd{margin-left:0;flex:1;text-align
       <button class="btn" id="lpSrcStop" type="button" hidden>停止擷取</button>
       <span class="lmeter" id="lpMeter"><i></i></span>
       <span class="lsrc" id="lpSrcTxt">尚未選擇擷取來源</span>
+      <label class="btn" for="lpBatch">一次匯入多個 MXF／音檔（依檔名配對）</label>
+      <input type="file" id="lpBatch" accept="audio/*,video/*,.mxf,.MXF" multiple hidden>
       <label class="lsrc" style="margin-left:auto">辨識模型
         <select id="lpModel">
           <option value="onnx-community/whisper-base">base（建議）</option>
@@ -362,8 +384,8 @@ body:not(.show-sothead) .u.sothead:not(.brk) .cd{margin-left:0;flex:1;text-align
       <aside>
         <ol id="sotList"></ol>
         <div class="lrow">
-          <button class="btn small" id="lpExport" type="button">匯出時間檔</button>
-          <label class="btn small" for="lpImportT">匯入時間檔</label>
+          <button class="btn small" id="lpExport" type="button">匯出紀錄檔</button>
+          <label class="btn small" for="lpImportT">匯入紀錄檔</label>
           <input type="file" id="lpImportT" accept=".json" hidden>
         </div>
         <p class="note" id="lpStore"></p>
@@ -395,11 +417,32 @@ body:not(.show-sothead) .u.sothead:not(.brk) .cd{margin-left:0;flex:1;text-align
     </div>
   </div>
 </div>
+<div id="lpPair" hidden>
+  <div class="lpPairBox">
+    <h3>確認檔案配對</h3>
+    <p class="note" id="lpPairSum"></p>
+    <div class="lscroll"><table id="lpPairTable" class="ltable"></table></div>
+    <div class="lrow" style="margin-top:14px;justify-content:flex-end">
+      <button class="btn" id="lpPairCancel" type="button">取消</button>
+      <button class="btn primary" id="lpPairGo" type="button">開始匯入</button>
+    </div>
+  </div>
+</div>
+<div id="storeDlg" hidden>
+  <div class="lpPairBox">
+    <h3>管理儲存空間</h3>
+    <p class="note">所有資料只存在這台電腦的瀏覽器裡。MXF 和影片檔本身不會被存下來，只存從中抽出的聲音（每則約 4～6 MB）。</p>
+    <div id="storeBody"></div>
+    <div class="lrow" style="margin-top:16px;justify-content:flex-end">
+      <button class="btn primary" id="storeClose" type="button">完成</button>
+    </div>
+  </div>
+</div>
 <div id="memoEd" hidden>
   <div class="mewrap">
     <div class="mehead">
-      <h2>備註編輯</h2>
-      <span class="note">直接點每一句下方的「＋ 備註」打字，可以換行，打完自動儲存。播出時會顯示在該句下方。</span>
+      <h2>顯示文字</h2>
+      <span class="note">點任一行就能改播出時顯示的文字，可以換行或整行清空，自動儲存。語音辨識、對齊、滑動仍依原稿。</span>
       <button class="btn primary" id="memoClose" type="button">完成</button>
     </div>
     <div id="meBody" class="mebody"></div>
@@ -704,8 +747,8 @@ function normalize(text){
 function keysFromText(t){ return normalize(t).map(e=>e.k); }
 
 /* ---------- 文件組裝 ---------- */
-function buildDoc(stories,learned,memos){
-  learned=learned||{}; memos=memos||{};
+function buildDoc(stories,learned,memos,edits){
+  learned=learned||{}; memos=memos||{}; edits=edits||{};
   const units=[], stream=[], tracked=[];
   stories.forEach((st,si)=>{
     if(st.type==='break'){   // 廣告時段：只有一條倒數時間軸
@@ -739,11 +782,14 @@ function buildDoc(stories,learned,memos){
     // 備註：主播稿逐行；SOT 逐句（掛在該句最後一行）
     const su=units.filter(x=>x.si===si);
     const aArr=st.ankey&&memos[st.ankey];
-    if(Array.isArray(aArr)) su.filter(x=>x.type==='anchor').forEach((x,j)=>{ if(aArr[j]) x.memo=aArr[j]; });
+    // 顯示文字：只改畫面上看到的字，辨識、對齊、時間軸仍用原稿
+    const aEd=st.ankey&&edits[st.ankey];
+    if(Array.isArray(aEd)) su.filter(x=>x.type==='anchor').forEach((x,j)=>{ if(typeof aEd[j]==='string') x.disp=aEd[j]; });
     const pkU=su.find(x=>x.key&&/^pkg-/.test(x.key));
     if(pkU){
       const arr=memos[pkU.key]||(learned[pkU.key]&&learned[pkU.key].notes);
-      if(Array.isArray(arr)) makeGroups(pkgLines(units,pkU.ui),0).forEach((g,i)=>{ if(arr[i]) g[g.length-1].memo=arr[i]; });
+      const ed=edits[pkU.key];
+      if(Array.isArray(ed)) pkgLines(units,pkU.ui).forEach((x,j)=>{ if(typeof ed[j]==='string') x.disp=ed[j]; });
     }
   });
   for(const u of units){
@@ -801,8 +847,8 @@ function lcs(H,S,s0,s1){
 /* ---------- 追蹤引擎（不碰畫面，方便測試） ---------- */
 class Engine{
   constructor(opt){ this.opt=Object.assign({autoSot:true,sotDelay:0.6,grace:0.5,maxWait:3,soundGate:false,predict:true,lead:20,predictMs:8000,resync:true,verifyWin:20},opt||{}); this.setStories([]); }
-  setStories(stories,learned,memos){
-    const d=buildDoc(stories,learned,memos);
+  setStories(stories,learned,memos,edits){
+    const d=buildDoc(stories,learned,memos,edits);
     this.units=d.units; this.stream=d.stream; this.tracked=d.tracked; this.N=d.stream.length;
     this.heads=d.units.filter(u=>u.type==='sothead');
     this.reset();
@@ -1240,7 +1286,7 @@ if(typeof document!=='undefined'){
 (function(){
 const $=s=>document.querySelector(s);
 const esc=s=>s.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
-const DEFAULTS={mic:'',font:56,mirror:'none',cursor:33,autoSot:true,sotDelay:0.6,grace:0.5,maxWait:3,showNotes:true,showMemo:true,showSotHead:false,lh:1.5,gap:0.45,verifyWin:20,stall:5,meter:true,predict:true,lead:20,micTrack:false};
+const DEFAULTS={mic:'',font:56,mirror:'none',cursor:33,autoSot:true,sotDelay:0.6,grace:0.5,maxWait:3,showNotes:true,showMemo:true,autoDelRecDays:7,autoDelAfterRec:false,showSotHead:false,lh:1.5,gap:0.45,verifyWin:20,stall:5,meter:true,predict:true,lead:20,micTrack:false};
 let settings=Object.assign({},DEFAULTS);
 try{ Object.assign(settings,JSON.parse(localStorage.getItem('newsprompter.settings')||'{}')); }catch(e){}
 const saveSettings=()=>{ try{ localStorage.setItem('newsprompter.settings',JSON.stringify(settings)); }catch(e){} };
@@ -1252,6 +1298,17 @@ try{ memos=JSON.parse(localStorage.getItem('newsprompter.memos')||'{}')||{}; }ca
 let memoSaveT=0;
 const saveMemos=()=>{ clearTimeout(memoSaveT); memoSaveT=setTimeout(()=>{ try{ localStorage.setItem('newsprompter.memos',JSON.stringify(memos)); }catch(e){ toast('無法儲存備註'); } },300); };
 setTimeout(()=>{ let moved=0; for(const k in learned){ const n=learned[k]&&learned[k].notes; if(Array.isArray(n)&&n.some(Boolean)&&!memos[k]){ memos[k]=n.slice(); moved++; } } if(moved) saveMemos(); },0);
+let edits={};
+try{ edits=JSON.parse(localStorage.getItem('newsprompter.edits')||'{}')||{}; }catch(e){ edits={}; }
+let editSaveT=0;
+const saveEdits=()=>{ clearTimeout(editSaveT); editSaveT=setTimeout(()=>{ try{ localStorage.setItem('newsprompter.edits',JSON.stringify(edits)); }catch(e){ toast('無法儲存修改的文字'); } },300); };
+function getEdit(key,i){ const a=edits[key]; return Array.isArray(a)&&typeof a[i]==='string'?a[i]:null; }
+function setEdit(key,i,len,val,orig){
+  let a=edits[key]; if(!Array.isArray(a)||a.length!==len) a=Array.from({length:len},(_,j)=>(Array.isArray(a)&&typeof a[j]==='string')?a[j]:null);
+  a[i]=(val===orig)?null:val;
+  if(a.some(x=>typeof x==='string')) edits[key]=a; else delete edits[key];
+  saveEdits();
+}
 function getMemo(key,i){ const a=memos[key]; return Array.isArray(a)&&a[i]||''; }
 function setMemo(key,i,len,text){
   let a=memos[key]; if(!Array.isArray(a)||a.length!==len) a=Array.from({length:len},(_,j)=>(Array.isArray(a)&&a[j])||'');
@@ -1320,10 +1377,9 @@ function toast(msg,ms){
 function applySettingsToUi(){
   $('#fs').value=settings.font; $('#fsVal').textContent=settings.font+' px';
   $('#lh').value=settings.lh; $('#lhVal').textContent=(+settings.lh).toFixed(2); $('#gap').value=settings.gap; $('#gapVal').textContent=(+settings.gap).toFixed(2)+' 字高';
-  $('#verifyWin').value=settings.verifyWin; $('#showMemo').checked=settings.showMemo!==false;
   $('#cy').value=settings.cursor; $('#cyVal').textContent=settings.cursor+'%';
   $('#mirror').value=settings.mirror; $('#autoSot').checked=settings.autoSot;
-  $('#grace').value=settings.grace; $('#maxWait').value=settings.maxWait; $('#showNotes').checked=settings.showNotes; $('#stall').value=settings.stall; $('#micTrack').checked=!!settings.micTrack; $('#predict').checked=settings.predict; $('#lead').value=settings.lead; $('#meterOn').checked=settings.meter; $('#showSotHead').checked=settings.showSotHead;
+  $('#maxWait').value=settings.maxWait; $('#showNotes').checked=settings.showNotes; $('#stall').value=settings.stall; $('#micTrack').checked=!!settings.micTrack; $('#predict').checked=settings.predict; $('#lead').value=settings.lead; $('#meterOn').checked=settings.meter; $('#showSotHead').checked=settings.showSotHead;
 }
 function applyStageStyle(){
   const r=document.documentElement.style;
@@ -1346,13 +1402,10 @@ function bindSetting(id,key,conv){
 }
 bindSetting('fs','font',el=>+el.value);
 bindSetting('lh','lh',el=>+el.value);
-bindSetting('showMemo','showMemo',el=>el.checked);
 bindSetting('gap','gap',el=>+el.value);
-bindSetting('verifyWin','verifyWin',el=>Math.max(0,Math.min(120,+el.value||0)));
 bindSetting('cy','cursor',el=>+el.value);
 bindSetting('mirror','mirror');
 bindSetting('autoSot','autoSot',el=>el.checked);
-bindSetting('grace','grace',el=>Math.max(0,Math.min(3,+el.value||0)));
 bindSetting('maxWait','maxWait',el=>Math.max(0,Math.min(15,+el.value||0)));
 bindSetting('showNotes','showNotes',el=>el.checked);
 bindSetting('predict','predict',el=>el.checked);
@@ -1473,7 +1526,7 @@ function renderDoc(){
     else if(u.type==='sothead') d.innerHTML='<div class="wt"></div><span class="tag">原音</span><span class="who">'+esc(u.name||'')+'</span><span class="dur">'+(u.learned?'已學習 '+u.sec.toFixed(1)+' 秒，':u.sec+' 秒，')+u.screens.length+' 句</span><span class="cd"></span><div class="bar"><i></i></div>';
     else if(u.type==='sotlabel') d.innerHTML='<span class="tag">原音</span><span class="who">'+esc(u.name||'')+'</span><span class="dur">國語，用語音追蹤</span>';
     else if(u.type==='end') d.textContent=u.text;
-    else{ const tx=document.createElement('span'); tx.className='tx'; tx.textContent=u.text; d.appendChild(tx); if(u.memo){ const m=document.createElement('div'); m.className='memo'; m.textContent=u.memo; d.appendChild(m); } if(u.sc) d.classList.add('sc'); if(u.sot) d.classList.add('sotv'); if(u.look==='vo') d.classList.add('vo-look'); }
+    else{ const tx=document.createElement('span'); tx.className='tx'; tx.textContent=u.disp!=null?u.disp:u.text; d.appendChild(tx); if(u.memo){ const m=document.createElement('div'); m.className='memo'; m.textContent=u.memo; d.appendChild(m); } if(u.sc) d.classList.add('sc'); if(u.sot) d.classList.add('sotv'); if(u.look==='vo') d.classList.add('vo-look'); }
     if(u.type==='anchor'||u.type==='vo'||u.type==='sot'||u.type==='sothead') d.classList.add('tap');
     if(u.brk) d.classList.add('brk');
     doc.appendChild(d); els.push(d);
@@ -1501,8 +1554,10 @@ $('#pane').addEventListener('wheel',e=>{
 
 function setCurText(u,readRaw){
   const el=els[u.ui].querySelector('.tx')||els[u.ui];
-  if(u.s1===undefined||readRaw<=0){ el.textContent=u.text; return; }
-  el.innerHTML='<span class="rd">'+esc(u.text.slice(0,readRaw))+'</span>'+esc(u.text.slice(readRaw));
+  const t=u.disp!=null?u.disp:u.text;
+  if(u.s1===undefined||readRaw<=0){ el.textContent=t; return; }
+  const cut=u.disp!=null?Math.round(readRaw/Math.max(1,u.text.length)*t.length):readRaw;   // 改寫過的行依比例標示已念部分
+  el.innerHTML='<span class="rd">'+esc(t.slice(0,cut))+'</span>'+esc(t.slice(cut));
 }
 function readRawOf(u){
   if(u.s1===undefined) return 0;
@@ -1515,7 +1570,7 @@ function frame(now){
   eng.tick(now);
   const f=eng.focusUi(), u=eng.units[f];
   if(f!==shown.ui){
-    if(shown.ui>=0){ const pu=eng.units[shown.ui]; if(pu.s1!==undefined) (els[shown.ui].querySelector('.tx')||els[shown.ui]).textContent=pu.text; }
+    if(shown.ui>=0){ const pu=eng.units[shown.ui]; if(pu.s1!==undefined) (els[shown.ui].querySelector('.tx')||els[shown.ui]).textContent=pu.disp!=null?pu.disp:pu.text; }
     shown.ui=f; shown.readRaw=-1;
     while(shown.marked<f){ els[shown.marked].classList.add('past'); shown.marked++; }
     while(shown.marked>f){ shown.marked--; els[shown.marked].classList.remove('past'); }
@@ -1570,7 +1625,7 @@ function updateHud(now){
     cls+=' sot';
     if(s.state==='armed'){ const wi=eng.waitInfo(now); const nm=s.head.fromPkg?'SOT':'受訪原音'; t=s.head.brk?'廣告':!wi?'待命':wi.phase==='speech'?'等前一段說完，再等'+nm+'聲音':wi.phase==='manual'?nm+'待命，按 ↓ 開始':'等待'+nm+'聲音（最多 '+wi.remain.toFixed(1)+' 秒）'; }
     else if(s.state==='paused') t='時間軸暫停';
-    else t=(s.head.brk?'廣告　剩 '+Math.max(0,Math.ceil(s.head.sec-eng.sotElapsed(now)))+' 秒':s.head.fromPkg?('SOT 時間軸（記憶）'+(s.verified?'　已對齊確認'+(Math.abs(s.shift||0)>1.2?'（校正 '+(s.shift>0?'+':'')+s.shift+' 秒）':''):eng.opt.verifyWin>0&&s.state==='running'?(eng.sotElapsed(now)<=eng.opt.verifyWin?'　對齊確認中 '+Math.ceil(eng.opt.verifyWin-eng.sotElapsed(now))+' 秒':'　未能確認對齊，照記憶播放'):'')):'原音時間軸　'+(s.head.name||''))+(eng.speed!==1?'　速度 '+eng.speed.toFixed(2)+'×':'');
+    else t=(s.head.brk?'廣告　剩 '+Math.max(0,Math.ceil(s.head.sec-eng.sotElapsed(now)))+' 秒':s.head.fromPkg?('SOT 時間軸（記憶）'+(s.verified?'　已對齊確認'+(Math.abs(s.shift||0)>1.2?'（校正 '+(s.shift>0?'+':'')+s.shift+' 秒）':''):s.state==='running'?'　對齊確認中（等國語辨識對上一次）':'')):'原音時間軸　'+(s.head.name||''))+(eng.speed!==1?'　速度 '+eng.speed.toFixed(2)+'×':'');
   }
   else if(eng.paused) t='追蹤暫停';
   else if(eng.predicting){ cls+=' ok'; t='推估滑動中（辨識沒跟上）'; }
@@ -1844,6 +1899,7 @@ function applyAlign(k,b,chunks,span,ms){
     anchored:r.res.map(x=>x.anchored),seg:[r.matched,r.usable]};
   saveLearned();
   setStatus(k,{state:'done',ms});
+  if(settings.autoDelAfterRec) recDel(k).then(loadRecInfo).then(()=>{ renderSotList(); if(curKey()===k) renderDetail(); });
   if(curKey()===k) renderDetail();
   renderList();
 }
@@ -1910,12 +1966,12 @@ function renderTable(){
   const b=curBlock(), k=curKey(), lr=k&&learned[k];
   $('#lpPv').hidden=!(lr&&LP.info[k]); $('#lpAdj').hidden=!lr; LP.lastI=-2;
   if(!b){ $('#lpTable').innerHTML=''; return; }
-  let rows='<tr><th>句</th><th>開始</th><th>依據</th><th>字幕</th><th>備註（播出時顯示在字幕下方）　<button class="btn small" id="lpMemoDoc" type="button">用文件模式編輯</button></th></tr>';
+  let rows='<tr><th>句</th><th>開始</th><th>依據</th><th>字幕　<button class="btn small" id="lpMemoDoc" type="button">在文件模式改顯示文字</button></th></tr>';
   b.groups.forEach((g,i)=>{
     const t=lr&&lr.starts[i]!=null?lr.starts[i]:null;
     const memo=getMemo(k,i);
     const basis=!lr?'':lr.source==='manual'?'手動':(lr.anchored&&lr.anchored[i]?'<span class="ok">辨識對上</span>':'推估');
-    rows+='<tr data-i="'+i+'"><td class="n">'+(i+1)+((g[0].type==='sot'||g[0].sot)?' 原音':'')+'</td><td class="n">'+(t!=null?t.toFixed(1)+' 秒 <button class="btn small nb" data-n="-0.3" type="button">−</button><button class="btn small nb" data-n="0.3" type="button">＋</button>':'—')+'</td><td class="n">'+basis+'</td><td>'+g.map(x=>esc(x.text)).join('<br>')+'</td><td class="mc">'+(true?'<textarea class="memoIn" rows="1" data-i="'+i+'" placeholder="點這裡輸入">'+esc(memo)+'</textarea>':'')+'</td></tr>';
+    rows+='<tr data-i="'+i+'"><td class="n">'+(i+1)+((g[0].type==='sot'||g[0].sot)?' 原音':'')+'</td><td class="n">'+(t!=null?t.toFixed(1)+' 秒 <button class="btn small nb" data-n="-0.3" type="button">−</button><button class="btn small nb" data-n="0.3" type="button">＋</button>':'—')+'</td><td class="n">'+basis+'</td><td>'+g.map(x=>esc(x.text)).join('<br>')+'</td></tr>';
   });
   $('#lpTable').innerHTML=rows;
   document.querySelectorAll('#lpTable textarea.memoIn').forEach(t=>{ t.style.height='auto'; t.style.height=t.scrollHeight+'px'; });
@@ -1961,7 +2017,7 @@ function pvLoop(){
     if(i!==LP.lastI){
       LP.lastI=i;
       $('#lpPvIdx').textContent=i>=0?('第 '+(i+1)+' / '+b.groups.length+' 句'):(i===-3?'SOT 已結束':'SOT 開始前');
-      const mm=i>=0?getMemo(k,i):'';
+      const mm='';
       $('#lpPvText').innerHTML=(i>=0?b.groups[i].map(x=>esc(x.text)).join('<br>'):'')+(mm?'<div class="memo">'+esc(mm)+'</div>':'');
       document.querySelectorAll('#lpTable tr[data-i]').forEach(tr=>tr.classList.toggle('on',+tr.dataset.i===i));
       const on=document.querySelector('#lpTable tr.on'); if(on&&!pl.paused) on.scrollIntoView({block:'nearest'});
@@ -2047,28 +2103,87 @@ async function isMxfFile(f){
     for(let i=0;i+13<=h.length;i++){ let ok=true; for(let j=0;j<13;j++) if(h[i+j]!==P[j]){ ok=false; break; } if(ok) return true; } }catch(e){}
   return false;
 }
+// 把一個檔案（MXF、影片或聲音）存成某則新聞的錄音，並排入辨識
+async function importFileTo(f,b){
+  const k=b.head.key;
+  if(/\.mxf$/i.test(f.name)||await isMxfFile(f)){
+    setStatus(k,{state:'extract',pct:0});
+    try{
+      const r=await mxfExtractAudio((o,l)=>f.slice(o,o+l).arrayBuffer().then(x=>new Uint8Array(x)),f.size,pct=>setStatus(k,{state:'extract',pct}));
+      setStatus(k,{state:'',pct:0});
+      await saveRecording(k,b.story,wavBlob(r.data,r.rate));
+      return true;
+    }catch(err){ setStatus(k,{state:'error',msg:'MXF：'+(err.message||err)}); return false; }
+  }
+  if(f.size>400*1048576) toast('「'+f.name+'」很大（'+(f.size/1048576).toFixed(0)+' MB），瀏覽器要整個讀進記憶體才能解開，可能很慢或失敗',6000);
+  setStatus(k,{state:'extract',pct:0});
+  await saveRecording(k,b.story,f);
+  if((LP.status[k]||{}).state==='extract') setStatus(k,{state:'',pct:0});
+  return true;
+}
 $('#lpImportA').addEventListener('change',async e=>{
   const f=e.target.files[0]; e.target.value=''; const b=curBlock();
   if(!f) return;
   if(!b){ toast('請先在左邊選一則新聞'); return; }
-  const k=b.head.key;
   toast('已選擇「'+f.name+'」（'+(f.size/1048576).toFixed(0)+' MB），處理中…',3000);
-  if(/\.mxf$/i.test(f.name)||await isMxfFile(f)){
-    // MXF：瀏覽器無法直接解開，改由程式分段讀檔、抽出聲音軌
-    setStatus(k,{state:'extract',pct:0});
-    try{
-      const r=await mxfExtractAudio((o,l)=>f.slice(o,o+l).arrayBuffer().then(x=>new Uint8Array(x)),f.size,pct=>setStatus(k,{state:'extract',pct}));
-      toast('已從 MXF 抽出聲音：'+r.duration.toFixed(1)+' 秒（使用 '+r.used+' / '+r.tracks+' 個聲音軌）',3500);
-      setStatus(k,{state:'',pct:0});
-      await saveRecording(k,b.story,wavBlob(r.data,r.rate));
-    }catch(err){ setStatus(k,{state:'error',msg:'MXF：'+(err.message||err)}); }
-    return;
-  }
-  if(f.size>400*1048576) toast('檔案很大（'+(f.size/1048576).toFixed(0)+' MB），瀏覽器要整個讀進記憶體才能解開，可能很慢或失敗；可以的話請用聲音檔或低畫質版本',6000);
-  setStatus(k,{state:'extract',pct:0});
-  await saveRecording(k,b.story,f);
-  if((LP.status[k]||{}).state==='extract') setStatus(k,{state:'',pct:0});
+  await importFileTo(f,b);
 });
+
+// 一次匯入多個檔案：依檔名自動配對新聞
+function normName(x){ return String(x).replace(/\.[^.]+$/,'').toLowerCase().replace(/[\s_\-—–.,，、()（）\[\]【】「」]/g,''); }
+function lcSub(a,b){ let best=0; const dp=new Array(b.length+1).fill(0); for(let i=1;i<=a.length;i++){ let prev=0; for(let j=1;j<=b.length;j++){ const t=dp[j]; dp[j]=a[i-1]===b[j-1]?prev+1:0; if(dp[j]>best) best=dp[j]; prev=t; } } return best; }
+function nameScore(fa,sb){
+  const a=normName(fa), b=normName(sb); if(!a||!b) return 0;
+  if(a===b) return 1;
+  // 只看中文部分（去掉時段數字、final、v2 之類的英數字）
+  const ca=a.replace(/[a-z0-9]/g,''), cb=b.replace(/[a-z0-9]/g,'');
+  const r=(x,y)=>Math.min(x.length,y.length)/Math.max(x.length,y.length);
+  if(ca.length>=2&&cb.length>=2){
+    if(ca===cb) return 0.95;
+    if(ca.includes(cb)||cb.includes(ca)) return 0.7+0.2*r(ca,cb);
+  }
+  if(a.includes(b)||b.includes(a)) return 0.7+0.2*r(a,b);
+  const [x,y]=ca.length>=2&&cb.length>=2?[ca,cb]:[a,b];
+  const c=lcSub(x,y); return c>=3?0.8*c/Math.min(x.length,y.length):0;
+}
+let pairFiles=[];
+function openPairDialog(files){
+  LP.blocks=learnBlocks();
+  pairFiles=[...files];
+  if(!LP.blocks.length){ toast('目前載入的稿件沒有 SOT，無法配對'); return; }
+  const sc=[]; pairFiles.forEach((f,fi)=>LP.blocks.forEach((b,bi)=>{ const v=nameScore(f.name,b.story); if(v>=0.5) sc.push({fi,bi,v}); }));
+  sc.sort((x,y)=>y.v-x.v);
+  const asg=new Array(pairFiles.length).fill(-1), used=new Set();
+  for(const x of sc) if(asg[x.fi]<0&&!used.has(x.bi)){ asg[x.fi]=x.bi; used.add(x.bi); }
+  let rows='<tr><th>檔案</th><th>大小</th><th>配對到的新聞</th></tr>';
+  pairFiles.forEach((f,fi)=>{
+    let opt='<option value="-1">（不匯入）</option>';
+    LP.blocks.forEach((b,bi)=>{ const has=LP.info[b.head.key]||learned[b.head.key]; opt+='<option value="'+bi+'"'+(asg[fi]===bi?' selected':'')+'>'+b.no+'　'+esc(b.story)+(has?'（會取代原有錄音）':'')+'</option>'; });
+    rows+='<tr><td>'+esc(f.name)+'</td><td class="n">'+(f.size/1048576).toFixed(0)+' MB</td><td><select data-fi="'+fi+'">'+opt+'</select></td></tr>';
+  });
+  $('#lpPairTable').innerHTML=rows;
+  const n=asg.filter(x=>x>=0).length;
+  $('#lpPairSum').textContent='共 '+pairFiles.length+' 個檔案，依檔名自動配對到 '+n+' 則。沒配對到或配錯的，請在右邊選單修改。';
+  $('#lpPair').hidden=false;
+}
+$('#lpPairCancel').addEventListener('click',()=>{ $('#lpPair').hidden=true; pairFiles=[]; });
+$('#lpPairGo').addEventListener('click',async()=>{
+  const pairs=[...document.querySelectorAll('#lpPairTable select')].map(sel=>({f:pairFiles[+sel.dataset.fi],bi:+sel.value})).filter(x=>x.bi>=0);
+  const seen=new Set(); for(const x of pairs){ if(seen.has(x.bi)){ toast('有兩個檔案配到同一則新聞，請修改'); return; } seen.add(x.bi); }
+  if(!pairs.length){ toast('沒有選擇要匯入的檔案'); return; }
+  $('#lpPair').hidden=true;
+  const blocks=LP.blocks;
+  for(let i=0;i<pairs.length;i++){
+    const {f,bi}=pairs[i];
+    toast('匯入 '+(i+1)+' / '+pairs.length+'：'+f.name,4000);
+    await importFileTo(f,blocks[bi]);      // 一次處理一個檔案，大檔案也不會同時占用記憶體
+  }
+  pairFiles=[];
+  toast('全部 '+pairs.length+' 個檔案已匯入，辨識會在背景依序完成',5000);
+});
+$('#lpBatch').addEventListener('change',e=>{ const fs=[...e.target.files]; e.target.value=''; if(fs.length) openPairDialog(fs); });
+$('#learn').addEventListener('dragover',e=>{ if(e.dataTransfer&&[...e.dataTransfer.types].includes('Files')) e.preventDefault(); });
+$('#learn').addEventListener('drop',e=>{ const fs=[...(e.dataTransfer?e.dataTransfer.files:[])]; if(!fs.length) return; e.preventDefault(); e.stopPropagation(); openPairDialog(fs); });
 window.addEventListener('keydown',e=>{
   if($('#learn').hidden||e.target.matches('input,select,textarea')) return;
   const pl=$('#lpPlayer'), k=curKey(), lr=k&&learned[k];
@@ -2079,21 +2194,31 @@ window.addEventListener('keydown',e=>{
   } else if(e.key===' '&&!pl.hidden){ e.preventDefault(); pl.play(); }
   else if(e.key==='Escape'){ e.preventDefault(); closeLearn(); }
 });
-$('#lpExport').addEventListener('click',()=>{
-  const blob=new Blob([JSON.stringify({app:'newsprompter',version:3,learned,memos},null,2)],{type:'application/json'});
+// 紀錄檔：SOT 時間軸＋改寫過的顯示文字（不含錄音），可帶到其他電腦
+function exportRecord(){
+  const nT=Object.keys(learned).length, nE=Object.keys(edits).length;
+  if(!nT&&!nE){ toast('目前還沒有可以匯出的時間軸或改寫文字'); return; }
+  const blob=new Blob([JSON.stringify({app:'newsprompter',version:5,exported:new Date().toISOString(),learned,edits},null,2)],{type:'application/json'});
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
-  a.download='字幕時間檔_'+new Date().toISOString().slice(0,10)+'.json'; document.body.appendChild(a); a.click(); a.remove();
-});
-$('#lpImportT').addEventListener('change',async e=>{
-  const f=e.target.files[0]; e.target.value=''; if(!f) return;
+  const d=new Date(), z=x=>String(x).padStart(2,'0');
+  a.download='提詞紀錄_'+d.getFullYear()+z(d.getMonth()+1)+z(d.getDate())+'_'+z(d.getHours())+z(d.getMinutes())+'.json';
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),3000);
+  toast('已匯出：'+nT+' 則 SOT 時間軸、'+nE+' 段改寫文字',4000);
+}
+async function importRecord(f){
   try{
-    const j=JSON.parse(await f.text()); const src=j&&j.learned?j.learned:j; let n=0;
+    const j=JSON.parse(await f.text()); const src=j&&j.learned?j.learned:j; let n=0, m=0;
     for(const kk in src){ const v=src[kk]; if(/^(sot|pkg)-[0-9a-f]{8}$/.test(kk)&&v&&v.total>0&&Array.isArray(v.starts)){ learned[kk]=v; n++; } }
-    let m=0; if(j&&j.memos) for(const kk in j.memos){ if(/^(pkg|anc)-[0-9a-f]{8}$/.test(kk)&&Array.isArray(j.memos[kk])){ memos[kk]=j.memos[kk]; m++; } }
-    if(m) saveMemos();
-    saveLearned(); toast('已匯入 '+n+' 則字幕時間'+(m?'、'+m+' 段備註':'')); renderSotList(); renderDetail(); renderList();
-  }catch(err){ toast('匯入失敗：檔案格式不對'); }
-});
+    if(j&&j.edits) for(const kk in j.edits){ if(/^(pkg|anc)-[0-9a-f]{8}$/.test(kk)&&Array.isArray(j.edits[kk])){ edits[kk]=j.edits[kk]; m++; } }
+    saveLearned(); saveEdits();
+    toast('已匯入：'+n+' 則 SOT 時間軸、'+m+' 段改寫文字',4000);
+    renderList(); if(!$('#learn').hidden){ renderSotList(); renderDetail(); }
+  }catch(err){ toast('匯入失敗：這不是提詞紀錄檔'); }
+}
+$('#lpExport').addEventListener('click',exportRecord);
+$('#lpImportT').addEventListener('change',async e=>{ const f=e.target.files[0]; e.target.value=''; if(f) await importRecord(f); });
+$('#recExport').addEventListener('click',exportRecord);
+$('#recImport').addEventListener('change',async e=>{ const f=e.target.files[0]; e.target.value=''; if(f) await importRecord(f); });
 
 function learnBlocks(){
   const out=[];
@@ -2109,21 +2234,29 @@ function learnBlocks(){
 }
 
 /* ---------- 備註編輯（文件模式） ---------- */
+function editable(el){ try{ el.contentEditable='plaintext-only'; }catch(e){} if(el.contentEditable!=='plaintext-only') el.contentEditable='true'; }
 function renderMemoEd(focusKey){
   const box=$('#meBody'); box.innerHTML=''; let no=0, first=null;
-  const blk=(linesHtml,key,i,len,sc)=>{
+  // 一個區塊＝一行主播稿，或 SOT 的一句（1～2 行）；每行可改顯示文字，區塊下方是備註
+  const blk=(lines,memoKey,memoI,memoLen,sc)=>{
     const d=document.createElement('div'); d.className='me-blk'+(sc?' sc':'');
-    d.innerHTML=linesHtml;
-    const m=document.createElement('div'); m.className='memoE';
-    try{ m.contentEditable='plaintext-only'; }catch(e){}
-    if(m.contentEditable!=='plaintext-only') m.contentEditable='true';
-    m.textContent=getMemo(key,i);
-    m.addEventListener('input',()=>{ const t=m.innerText.replace(/\n$/,''); setMemo(key,i,len,t); if(!t.trim()) m.innerHTML=''; });
-    m.addEventListener('keydown',e=>{ if(e.key==='Escape'){ e.preventDefault(); m.blur(); } });
-    d.appendChild(m);
-    d.addEventListener('mousedown',e=>{ if(e.target!==m&&!m.contains(e.target)){ e.preventDefault(); m.focus(); placeEnd(m); } });
+    for(const L of lines){
+      const row=document.createElement('div'); row.className='me-row';
+      const el=document.createElement('div'); el.className='me-l '+L.cls; editable(el);
+      const cur=getEdit(L.key,L.i); el.textContent=cur!=null?cur:L.orig;
+      const mark=()=>{ const mod=getEdit(L.key,L.i)!=null; row.classList.toggle('mod',mod); el.title=mod?'原稿：'+L.orig:''; };
+      el.addEventListener('input',()=>{ const v=el.innerText.replace(/\n$/,''); setEdit(L.key,L.i,L.len,v,L.orig); if(!v) el.innerHTML=''; mark(); });
+      el.addEventListener('keydown',e=>{ if(e.key==='Escape'){ e.preventDefault(); el.blur(); } });
+      const rv=document.createElement('button'); rv.type='button'; rv.className='me-rv'; rv.textContent='還原原稿';
+      rv.addEventListener('mousedown',e=>e.preventDefault());
+      rv.addEventListener('click',()=>{ setEdit(L.key,L.i,L.len,L.orig,L.orig); el.textContent=L.orig; mark(); });
+      row.appendChild(el); if(L.time) { const t=document.createElement('span'); t.className='me-t'; t.textContent=L.time; row.appendChild(t); }
+      row.appendChild(rv);
+      const og=document.createElement('div'); og.className='me-orig'; og.textContent='原稿：'+L.orig; row.appendChild(og);
+      d.appendChild(row); mark();
+    }
     box.appendChild(d);
-    if(!first&&focusKey&&key===focusKey) first=d;
+    if(!first&&focusKey&&memoKey===focusKey) first=d;
   };
   stories.forEach(st=>{
     if(st.type==='break') return; no++;
@@ -2131,15 +2264,15 @@ function renderMemoEd(focusKey){
     const anc=st.units.filter(u=>u.type==='anchor');
     if(anc.length&&st.ankey){
       const sec=document.createElement('div'); sec.className='me-sec'; sec.textContent='主播稿'; box.appendChild(sec);
-      anc.forEach((u,j)=>blk('<span class="me-l anchor">'+esc(u.text)+'</span>',st.ankey,j,anc.length,false));
+      anc.forEach((u,j)=>blk([{cls:'anchor',orig:u.text,key:st.ankey,i:j,len:anc.length}],st.ankey,j,anc.length,false));
     }
     const pi=st.units.findIndex(u=>u.type==='pkg');
     if(pi>=0){
-      const groups=makeGroups(pkgLines(st.units,pi),0), key=st.units[pi].key, lr=learned[key];
+      const lines=pkgLines(st.units,pi), groups=makeGroups(lines,0), key=st.units[pi].key, lr=learned[key];
       const sec=document.createElement('div'); sec.className='me-sec'; sec.textContent='SOT'+(lr?'（已學習時間）':''); box.appendChild(sec);
       groups.forEach((g,i)=>{
-        const t=lr&&lr.starts&&lr.starts[i]!=null?'<span class="me-t">'+lr.starts[i].toFixed(1)+' 秒</span>':'';
-        blk(g.map((x,j)=>'<span class="me-l '+((x.type==='sot'||x.sot)?'sot':'vo')+'">'+esc(x.text)+(j===0?t:'')+'</span>').join(''),key,i,groups.length,i>0);
+        blk(g.map((x,j)=>({cls:(x.type==='sot'||x.sot)?'sot':'vo',orig:x.text,key,i:lines.indexOf(x),len:lines.length,
+          time:j===0&&lr&&lr.starts&&lr.starts[i]!=null?lr.starts[i].toFixed(1)+' 秒':''})),key,i,groups.length,i>0);
       });
     }
   });
@@ -2152,11 +2285,53 @@ $('#openMemo').addEventListener('click',()=>openMemoEd());
 $('#memoClose').addEventListener('click',()=>{ $('#memoEd').hidden=true; if(!$('#learn').hidden) renderTable(); });
 document.addEventListener('click',e=>{ if(e.target&&e.target.id==='lpMemoDoc'){ e.stopPropagation(); openMemoEd(curKey()); } },true);
 
+/* ---------- 儲存空間管理 ---------- */
+async function recEntries(){
+  const out=[];
+  try{ const db=await idb(); await new Promise(res=>{ const q=db.transaction('recs').objectStore('recs').openCursor();
+    q.onsuccess=()=>{ const c=q.result; if(!c){ res(); return; } const v=c.value; out.push({k:c.key,saved:v.saved,size:v.blob?v.blob.size:0}); c.continue(); };
+    q.onerror=()=>res(); }); }catch(e){}
+  return out;
+}
+async function deleteRecs(filter){ const list=(await recEntries()).filter(filter); for(const x of list) await recDel(x.k); return list.length; }
+async function afterStoreChange(){ await loadRecInfo(); renderList(); if(!$('#learn').hidden){ renderSotList(); renderDetail(); } if(!$('#storeDlg').hidden) renderStore(); }
+async function autoCleanup(){
+  const d=+settings.autoDelRecDays||0; if(d<=0) return;
+  const lim=Date.now()-d*864e5;
+  const n=await deleteRecs(x=>x.saved&&Date.parse(x.saved)<lim);
+  if(n){ toast('已自動刪除 '+n+' 段超過 '+d+' 天的錄音（字幕時間保留）',5000); await loadRecInfo(); }
+}
+async function renderStore(){
+  const recs=await recEntries(), size=recs.reduce((a,x)=>a+x.size,0);
+  const nL=Object.keys(learned).length, nE=Object.keys(edits).length;
+  let est=''; try{ const e=await navigator.storage.estimate(); if(e&&e.usage!=null) est='這個網頁目前在瀏覽器裡共用了約 '+(e.usage/1048576).toFixed(1)+' MB。'; }catch(e){}
+  $('#storeBody').innerHTML=
+   '<div class="st-sec"><h4>錄音（試聽與重新辨識用）</h4><div>共 <span class="num">'+recs.length+'</span> 段，約 <span class="num">'+(size/1048576).toFixed(1)+' MB</span>。刪除錄音不影響已算好的字幕時間。</div>'+
+     '<div class="lrow"><button class="btn danger" id="stDelRecAll" type="button">刪除全部錄音</button><button class="btn" id="stDelRecDone" type="button">只刪除已算好時間的錄音</button></div>'+
+     '<label class="inline lopt" style="margin-top:10px"><input type="checkbox" id="stAutoAfter"'+(settings.autoDelAfterRec?' checked':'')+'> 辨識完成後自動刪除錄音（之後無法試聽或重新辨識）</label>'+
+     '<label class="inline lopt">自動刪除超過 <input type="number" id="stAutoDays" min="0" max="365" value="'+(+settings.autoDelRecDays||0)+'"> 天的錄音（0 為不自動刪除，開啟網頁時檢查）</label></div>'+
+   '<div class="st-sec"><h4>SOT 時間軸</h4><div>共 <span class="num">'+nL+'</span> 則。清除後需要重新錄音辨識才能依記憶播放。</div>'+
+     '<div class="lrow"><button class="btn" id="stDelL30" type="button">清除 30 天前的時間軸</button><button class="btn danger" id="stDelLAll" type="button">清除全部時間軸</button></div></div>'+
+   '<div class="st-sec"><h4>改寫的顯示文字</h4><div>共 <span class="num">'+nE+'</span> 段。</div>'+
+     '<div class="lrow"><button class="btn danger" id="stDelEAll" type="button">清除全部改寫文字</button></div></div>'+
+   '<p class="note">'+est+' 清除時間軸或改寫文字前，建議先「匯出紀錄檔」備份。</p>';
+  $('#stDelRecAll').onclick=async()=>{ if(!confirm('刪除全部 '+recs.length+' 段錄音？字幕時間會保留。')) return; const n=await deleteRecs(()=>true); toast('已刪除 '+n+' 段錄音'); afterStoreChange(); };
+  $('#stDelRecDone').onclick=async()=>{ const n=await deleteRecs(x=>!!learned[x.k]); toast('已刪除 '+n+' 段已算好時間的錄音'); afterStoreChange(); };
+  $('#stAutoAfter').onchange=e=>{ settings.autoDelAfterRec=e.target.checked; saveSettings(); };
+  $('#stAutoDays').onchange=e=>{ settings.autoDelRecDays=Math.max(0,Math.min(365,+e.target.value||0)); e.target.value=settings.autoDelRecDays; saveSettings(); };
+  $('#stDelL30').onclick=()=>{ const lim=Date.now()-30*864e5; let n=0; for(const k in learned){ const t=Date.parse(learned[k].saved||0); if(!t||t<lim){ delete learned[k]; n++; } } saveLearned(); toast('已清除 '+n+' 則 30 天前的時間軸'); afterStoreChange(); };
+  $('#stDelLAll').onclick=()=>{ if(!confirm('清除全部 '+nL+' 則 SOT 時間軸？清除後要重新錄音辨識。')) return; for(const k in learned) delete learned[k]; saveLearned(); toast('已清除全部時間軸'); afterStoreChange(); };
+  $('#stDelEAll').onclick=()=>{ if(!confirm('清除全部 '+nE+' 段改寫的顯示文字？')) return; for(const k in edits) delete edits[k]; saveEdits(); toast('已清除全部改寫文字'); afterStoreChange(); };
+}
+$('#openStore').addEventListener('click',()=>{ $('#storeDlg').hidden=false; renderStore(); });
+$('#storeClose').addEventListener('click',()=>{ $('#storeDlg').hidden=true; });
+setTimeout(autoCleanup,1500);
+
 /* ---------- 開始與結束 ---------- */
 async function start(resume){
   if(!stories.length) return;
-  eng=new Engine({verifyWin:settings.verifyWin,resync:settings.resync!==false,autoSot:settings.autoSot,grace:settings.grace,maxWait:settings.maxWait,predict:settings.predict,lead:settings.lead});
-  eng.setStories(stories,learned,memos);
+  eng=new Engine({verifyWin:Infinity,resync:settings.resync!==false,autoSot:settings.autoSot,grace:0.5,maxWait:settings.maxWait,predict:settings.predict,lead:settings.lead});
+  eng.setStories(stories,learned,memos,edits);
   $('#setup').hidden=true; $('#stage').hidden=false;
   applyStageStyle(); renderDoc();
   if(resume&&resumeRef) applyResume(resumeRef);
