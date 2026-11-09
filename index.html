@@ -118,19 +118,23 @@ body:not(.show-sothead) .u.sothead:not(.brk) .cd{margin-left:0;flex:1;text-align
 .u.sot.cur,.u.sothead.cur{background:rgba(243,185,78,.10);border-radius:.15em}
 
 /* ---------- 控制列 ---------- */
-#hud{position:fixed;left:0;right:0;bottom:0;z-index:10;display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;padding:8px 14px calc(8px + env(safe-area-inset-bottom,0px));background:rgba(12,16,20,.92);border-top:1px solid var(--line);font-size:14px}
+#hud{position:fixed;left:0;right:0;bottom:0;z-index:10;display:flex;flex-wrap:nowrap;white-space:nowrap;overflow:hidden;gap:8px 14px;align-items:center;padding:8px 14px calc(8px + env(safe-area-inset-bottom,0px));background:rgba(12,16,20,.92);border-top:1px solid var(--line);font-size:14px}
 #hud .chip{display:inline-flex;align-items:center;gap:8px;font-weight:700;padding:3px 10px;border-radius:999px;background:var(--panel2);border:1px solid var(--line);white-space:nowrap}
 #hud .dot{width:9px;height:9px;border-radius:50%;background:var(--ink2)}
 #hud .chip.ok .dot{background:var(--ok)}
 #hud .chip.lost .dot{background:var(--tally)}
 #hud .chip.sot .dot{background:var(--sot)}
 #hud .chip.sot{color:var(--sot)}
-#micSel{max-width:190px;text-overflow:ellipsis}
+#micSel{max-width:150px;text-overflow:ellipsis;flex:none}
+#hud .chip{flex:none;max-width:42vw;overflow:hidden;text-overflow:ellipsis}
+#meter{flex:none}
+@media (max-width:1100px){ #micSel{display:none} }
+@media (max-width:860px){ #heard{display:none} #hud .btns.end{margin-left:auto} }
 #meter{width:90px;height:8px;background:var(--panel2);border-radius:4px;overflow:hidden;position:relative}
 #meter i{position:absolute;left:0;top:0;bottom:0;width:0;background:var(--ok)}
 #meter.hot i{background:var(--tally)}
-#heard{flex:1;min-width:140px;color:var(--ink2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#hud .btns{display:flex;gap:6px;flex-wrap:wrap}
+#heard{flex:1;min-width:0;color:var(--ink2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#hud .btns{display:flex;gap:6px;flex-wrap:nowrap;flex:none}
 #hud .btns.end{margin-left:auto}
 #hud .btn.small.primary{padding:4px 12px}
 #hud .btn.on{border-color:var(--sot);color:var(--sot)}
@@ -272,7 +276,7 @@ details.more .note{margin:8px 0 0}
 <main id="setup">
   <header>
     <h1>新聞提詞機</h1>
-    <p class="ver">版本 2026-11-06e（介面整理）</p>
+    <p class="ver">版本 2026-11-06f（控制列精簡為一行）</p>
     <p>載入主播稿與 SOT 字幕，依節目聲音讓字幕自動滑動。主播稿靠語音對位；SOT（主播念完後播出的整段影片）學過時間後依記憶推進。</p>
   </header>
 
@@ -332,11 +336,7 @@ details.more .note{margin:8px 0 0}
     <select id="micSel" class="btn small" title="切換麥克風"><option value="">系統預設</option></select>
     <span id="heard"></span>
     <span class="btns">
-      <button class="btn small" data-act="prev">上一句</button>
-      <button class="btn small" data-act="next">下一句</button>
       <button class="btn small" data-act="space" id="spaceBtn">暫停</button>
-      <button class="btn small" data-act="fsm">A−</button>
-      <button class="btn small" data-act="fsp">A＋</button>
       <button class="btn small" data-act="flipH" id="btnFlipH">左右鏡像</button>
       <button class="btn small" data-act="flipV" id="btnFlipV">上下顛倒</button>
       <button class="btn small" data-act="disp" id="btnDisp">行距與版面</button>
