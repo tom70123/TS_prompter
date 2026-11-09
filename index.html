@@ -43,6 +43,8 @@ button{cursor:pointer}
 .btn:hover{border-color:#4a5967}
 .btn.primary{background:var(--sot);color:#1b1405;border-color:var(--sot);font-weight:700;padding:12px 22px;font-size:17px}
 .btn.primary:hover{filter:brightness(1.07)}
+.btn.key{background:#2c3e52;border-color:#4f6d8c;color:#eef4fa;font-weight:600}
+.btn.key:hover{background:#34495f;border-color:#6b8cad}
 .btn.small{padding:4px 9px;font-size:13px}
 .btn:disabled{opacity:.4;cursor:default;filter:none}
 .ltable .ok,.lpStatus .ok,#sotList .ok{color:var(--ok)}
@@ -129,6 +131,8 @@ body:not(.show-sothead) .u.sothead:not(.brk) .cd{margin-left:0;flex:1;text-align
 #meter.hot i{background:var(--tally)}
 #heard{flex:1;min-width:140px;color:var(--ink2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #hud .btns{display:flex;gap:6px;flex-wrap:wrap}
+#hud .btns.end{margin-left:auto}
+#hud .btn.small.primary{padding:4px 12px}
 #hud .btn.on{border-color:var(--sot);color:var(--sot)}
 #dispPanel{position:fixed;right:14px;bottom:64px;z-index:12;width:min(360px,92vw);max-height:calc(100vh - 90px);overflow:auto;background:rgba(18,23,28,.96);border:1px solid var(--line);border-radius:10px;padding:12px 16px 14px;display:flex;flex-direction:column;gap:12px;font-size:14px;box-shadow:0 8px 30px rgba(0,0,0,.45)}
 #dispPanel[hidden]{display:none}
@@ -268,7 +272,7 @@ details.more .note{margin:8px 0 0}
 <main id="setup">
   <header>
     <h1>新聞提詞機</h1>
-    <p class="ver">版本 2026-11-06d（顯示設定移到播出畫面）</p>
+    <p class="ver">版本 2026-11-06e（介面整理）</p>
     <p>載入主播稿與 SOT 字幕，依節目聲音讓字幕自動滑動。主播稿靠語音對位；SOT（主播念完後播出的整段影片）學過時間後依記憶推進。</p>
   </header>
 
@@ -283,7 +287,7 @@ details.more .note{margin:8px 0 0}
       </div>
     </div>
     <ol id="list"></ol>
-    <div class="row-end"><button class="btn" id="addBreak" type="button">＋ 插入廣告時段</button><button class="btn" id="openMemo" type="button">顯示文字（文件模式）</button><button class="btn" id="openLearn" type="button">SOT 字幕時間（錄音與自動辨識）</button></div>
+    <div class="row-end"><button class="btn key" id="addBreak" type="button">＋ 插入廣告時段</button><button class="btn key" id="openMemo" type="button">顯示文字（文件模式）</button><button class="btn key" id="openLearn" type="button">SOT 字幕時間（錄音與自動辨識）</button></div>
     <details class="more"><summary>紀錄檔與儲存空間</summary>
       <p class="note">紀錄檔＝SOT 時間軸＋改寫過的顯示文字，可帶到其他電腦。</p>
       <div class="row-start"><button class="btn small" id="recExport" type="button">匯出紀錄檔</button><label class="btn small" for="recImport">匯入紀錄檔</label><input type="file" id="recImport" accept=".json" hidden><button class="btn small" id="openStore" type="button">管理儲存空間</button></div>
@@ -296,25 +300,20 @@ details.more .note{margin:8px 0 0}
       <label>麥克風
         <select id="mic"><option value="">系統預設</option></select>
       </label>
-      <label class="inline"><input type="checkbox" id="micTrack"> 把所選麥克風直接送進辨識（實驗功能，辨識沒反應時請取消）</label>
       <p class="note" id="micNote">第一次允許麥克風後，這裡才會列出各裝置的名稱。</p>
       <label class="inline"><input type="checkbox" id="autoSot"> 主播念完後自動開始 SOT 字幕</label>
       <label>念完後沒聲音，最多等幾秒開始
         <input type="number" id="maxWait" min="0" max="15" step="0.5">
       </label>
-      <label class="inline"><input type="checkbox" id="predict"> 辨識沒跟上時，依語速推估繼續滑動</label>
-      <label>推估最多領先辨識位置幾個字
-        <input type="number" id="lead" min="6" max="200" step="2">
-      </label>
+      <label class="inline"><input type="checkbox" id="predict"> 辨識沒跟上時，依語速推估繼續滑動（建議開啟）</label>
       <label>辨識停滯幾秒後自動重開
         <input type="number" id="stall" min="3" max="30" step="1">
       </label>
-      <label class="inline"><input type="checkbox" id="meterOn"> 顯示麥克風音量條（辨識異常時可取消勾選試試）</label>
       <button class="btn primary" id="goResume" type="button" hidden>從中斷處繼續</button>
       <button class="btn primary" id="go" type="button">開始</button>
       <p class="note" id="resumeInfo" hidden></p>
       <p class="note" id="goHint"></p>
-      <p class="note">字級、行距、閱讀線、鏡像等顯示設定，請在開始後按畫面下方的「顯示設定」，邊看邊調。</p>
+      <p class="note">字級、行距、閱讀線等版面設定，請在開始後按畫面下方的「行距與版面」，邊看邊調。</p>
       <p class="note warn" id="fileWarn" hidden>目前是直接開啟檔案（file://），Chrome 不會記住麥克風權限，辨識每次重新連線都會再問一次。請改用 http://localhost 開啟，做法見說明。</p>
       <p class="note">語音辨識使用 Chrome 或 Edge 內建的服務（zh-TW），聲音會送到瀏覽器供應商的伺服器，需要網路。請先在 Windows 的聲音設定把要用的麥克風設為預設錄音裝置。</p>
     </div>
@@ -338,16 +337,18 @@ details.more .note{margin:8px 0 0}
       <button class="btn small" data-act="space" id="spaceBtn">暫停</button>
       <button class="btn small" data-act="fsm">A−</button>
       <button class="btn small" data-act="fsp">A＋</button>
-      <button class="btn small" data-act="disp" id="btnDisp">顯示設定</button>
       <button class="btn small" data-act="flipH" id="btnFlipH">左右鏡像</button>
       <button class="btn small" data-act="flipV" id="btnFlipV">上下顛倒</button>
+      <button class="btn small" data-act="disp" id="btnDisp">行距與版面</button>
+    </span>
+    <span class="btns end">
       <button class="btn small" data-act="full">全螢幕</button>
       <button class="btn small" data-act="help">說明</button>
-      <button class="btn small" data-act="back">回設定</button>
+      <button class="btn small primary" data-act="back">中斷/返回首頁</button>
     </span>
   </div>
   <div id="dispPanel" hidden>
-    <div class="dp-head"><b>顯示設定</b><span class="note">調整後立刻生效並自動儲存</span><button class="btn small" id="dispClose" type="button">關閉</button></div>
+    <div class="dp-head"><b>行距與版面</b><span class="note">調整後立刻生效並自動儲存</span><button class="btn small" id="dispClose" type="button">關閉</button></div>
       <label>字級 <span class="val" id="fsVal"></span>
         <input type="range" id="fs" min="28" max="120" step="2">
       </label>
@@ -376,7 +377,7 @@ details.more .note{margin:8px 0 0}
     <div><kbd>空白鍵</kbd> 時間軸待命時開始，進行中暫停或繼續，其他時候暫停追蹤</div>
     <div><kbd>[</kbd> <kbd>]</kbd> 時間軸慢一點或快一點</div>
     <div><kbd>M</kbd> 左右鏡像　<kbd>U</kbd> 上下顛倒　<kbd>+</kbd> <kbd>-</kbd> 字級</div>
-    <div><kbd>D</kbd> 顯示設定　<kbd>H</kbd> 隱藏控制列　<kbd>F</kbd> 全螢幕　<kbd>Esc</kbd> 回設定</div>
+    <div><kbd>D</kbd> 行距與版面　<kbd>H</kbd> 隱藏控制列　<kbd>F</kbd> 全螢幕　<kbd>Esc</kbd> 中斷/返回首頁</div>
     <div>滑鼠：滾輪上下一句，左鍵下一句，右鍵上一句，雙擊某一行直接跳到那一行。</div>
   </div>
 </div>
@@ -384,14 +385,14 @@ details.more .note{margin:8px 0 0}
   <div class="lwrap">
     <div class="lhead">
       <h2>SOT 字幕時間</h2>
-      <button class="btn" id="learnClose" type="button">完成</button>
+      <button class="btn primary" id="learnClose" type="button">完成</button>
     </div>
     <div class="lbar">
       <button class="btn" id="lpSrc" type="button">選擇擷取來源</button>
       <button class="btn" id="lpSrcStop" type="button" hidden>停止擷取</button>
       <span class="lmeter" id="lpMeter"><i></i></span>
       <span class="lsrc" id="lpSrcTxt">尚未選擇擷取來源</span>
-      <label class="btn" for="lpBatch">一次匯入多個 MXF／音檔（依檔名配對）</label>
+      <label class="btn key" for="lpBatch">一次匯入多個 MXF／音檔（依檔名配對）</label>
       <input type="file" id="lpBatch" accept="audio/*,video/*,.mxf,.MXF" multiple hidden>
       <label class="lsrc" style="margin-left:auto">辨識模型
         <select id="lpModel">
@@ -1310,6 +1311,7 @@ const DEFAULTS={mic:'',font:56,mirror:'none',cursor:33,autoSot:true,sotDelay:0.6
 let settings=Object.assign({},DEFAULTS);
 try{ Object.assign(settings,JSON.parse(localStorage.getItem('newsprompter.settings')||'{}')); }catch(e){}
 if(!settings.v||settings.v<2){ if(+settings.lead===20) settings.lead=100; settings.v=2; try{ localStorage.setItem('newsprompter.settings',JSON.stringify(settings)); }catch(e){} }
+settings.micTrack=false; settings.meter=true; settings.lead=100;   // 這三項固定為建議值，不再提供調整
 const saveSettings=()=>{ try{ localStorage.setItem('newsprompter.settings',JSON.stringify(settings)); }catch(e){} };
 
 const stories=[];
@@ -1400,7 +1402,7 @@ function applySettingsToUi(){
   $('#lh').value=settings.lh; $('#lhVal').textContent=(+settings.lh).toFixed(2); $('#gap').value=settings.gap; $('#gapVal').textContent=(+settings.gap).toFixed(2)+' 字高';
   $('#cy').value=settings.cursor; $('#cyVal').textContent=settings.cursor+'%';
   $('#mirror').value=settings.mirror; $('#autoSot').checked=settings.autoSot;
-  $('#maxWait').value=settings.maxWait; $('#showNotes').checked=settings.showNotes; $('#stall').value=settings.stall; $('#micTrack').checked=!!settings.micTrack; $('#predict').checked=settings.predict; $('#lead').value=settings.lead; $('#meterOn').checked=settings.meter; $('#showSotHead').checked=settings.showSotHead;
+  $('#maxWait').value=settings.maxWait; $('#showNotes').checked=settings.showNotes; $('#stall').value=settings.stall; $('#predict').checked=settings.predict; $('#showSotHead').checked=settings.showSotHead;
 }
 function applyStageStyle(){
   const r=document.documentElement.style;
@@ -1430,10 +1432,7 @@ bindSetting('autoSot','autoSot',el=>el.checked);
 bindSetting('maxWait','maxWait',el=>Math.max(0,Math.min(15,+el.value||0)));
 bindSetting('showNotes','showNotes',el=>el.checked);
 bindSetting('predict','predict',el=>el.checked);
-bindSetting('micTrack','micTrack',el=>el.checked);
-bindSetting('lead','lead',el=>Math.max(6,Math.min(200,+el.value||100)));
 bindSetting('stall','stall',el=>Math.max(3,Math.min(30,+el.value||5)));
-bindSetting('meterOn','meter',el=>el.checked);
 bindSetting('showSotHead','showSotHead',el=>el.checked);
 
 function statsOf(st){
